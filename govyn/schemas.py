@@ -48,7 +48,7 @@ def build_schemas(route_defs: List[RouteDef], api_name: str) -> Dict[str, Any]:
 	paths: Dict[str, Any] = defaultdict(dict)
 	for route_def in route_defs:
 		spec: Any = {
-			'summary': 'test summary',
+			'summary': getattr(route_def.impl, '__doc__') or route_def.impl.__name__,
 			'responses': {
 				'200': {
 					'description': 'success',
