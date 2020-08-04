@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from dataclasses import dataclass
 
 import govyn
@@ -14,6 +14,10 @@ class TestResponse:
 	values: List[int]
 
 @dataclass
+class UnionResponse:
+	many_types: Union[str, int, float]
+
+@dataclass
 class ExampleAPI:
 	async def get(self) -> TestResponse:
 		return TestResponse('root', 1, [])
@@ -23,5 +27,8 @@ class ExampleAPI:
 
 	async def post_test(self, test_input: TestInput) -> TestResponse:
 		return TestResponse(test_input.name, 1, [ 1, 2, 3 ])
+
+	async def get_union(self) -> UnionResponse:
+		return UnionResponse(1)
 
 govyn.run(ExampleAPI())

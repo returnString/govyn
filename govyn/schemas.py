@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 from dataclasses import is_dataclass, fields
 from collections import defaultdict
 
@@ -33,6 +33,11 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 				'type': 'object',
 				'additionalProperties': pytype_to_schema(generic_types[1]),
 			}
+		elif origin_type == Union:
+			return {
+				'oneOf': [ pytype_to_schema(t) for t in generic_types ],
+			}
+
 
 	schema_type = _pytype_to_schema_type_lookup[py_type]
 	return {
