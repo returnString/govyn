@@ -25,6 +25,14 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 				'type': 'array',
 				'items': pytype_to_schema(generic_types[0]),
 			}
+		elif origin_type == dict:
+			if generic_types[0] is not str:
+				raise Exception('dictionary keys must be strings')
+
+			return {
+				'type': 'object',
+				'additionalProperties': pytype_to_schema(generic_types[1]),
+			}
 
 	schema_type = _pytype_to_schema_type_lookup[py_type]
 	return {
