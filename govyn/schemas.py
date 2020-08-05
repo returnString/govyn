@@ -7,7 +7,8 @@ from .route_def import RouteDef
 _pytype_to_schema_type_lookup = {
 	int: 'integer',
 	str: 'string',
-	float: 'number'
+	float: 'number',
+	bool: 'boolean',
 }
 
 def pytype_to_schema(py_type: type) -> Dict[str, Any]:
@@ -37,7 +38,6 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 			return {
 				'oneOf': [ pytype_to_schema(t) for t in generic_types ],
 			}
-
 
 	schema_type = _pytype_to_schema_type_lookup[py_type]
 	return {

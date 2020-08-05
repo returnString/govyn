@@ -19,7 +19,7 @@ async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str
 			ret[var_name] = None
 		else:
 			try:
-				ret[var_name] = arg_def.expected_type(value)
+				ret[var_name] = arg_def.parser(value) # type: ignore
 			except ValueError as e:
 				raise HTTPException(400, str(e))
 

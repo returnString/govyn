@@ -1,10 +1,39 @@
 from typing import Any, Union, Dict, Callable
 from dataclasses import dataclass
+from starlette.exceptions import HTTPException
+
+_ParserType = Callable[[ str ], Any]
 
 @dataclass
 class ArgDef:
 	expected_type: type
 	optional: bool
+	parser: _ParserType
+
+def _parse_bool(x: str) -> bool:
+	if x == "true":
+		return True
+	elif x == "false":
+		return False
+	raise HTTPException(400, 'invalid boolean value')
+
+_parser_overrides: Dict[type, _ParserType] = {
+	bool: _parse_bool,
+}
+
+def make_arg_def(expected_type: type) -> ArgDef:
+	is_optional = getattr(expected_type, '__origin__', None) == Union and getattr(expected_type, '__args__')[1] == type(None)
+
+	if is_optional:
+		expected_type = getattr(expected_type, '__args__')[0]
+
+	parser = _parser_overrides.get(expected_type, expected_type)
+
+	return ArgDef(
+		expected_type = expected_type,
+		optional = is_optional,
+		parser = parser,
+	)
 
 @dataclass
 class RouteDef:
@@ -13,17 +42,6 @@ class RouteDef:
 	impl: Callable[..., Any]
 	args: Dict[str, ArgDef]
 	return_type: type
-
-def make_arg_def(expected_type: type) -> ArgDef:
-	is_optional = getattr(expected_type, '__origin__', None) == Union and getattr(expected_type, '__args__')[1] == type(None)
-
-	if is_optional:
-		expected_type = getattr(expected_type, '__args__')[0]
-
-	return ArgDef(
-		expected_type = expected_type,
-		optional = is_optional,
-	)
 
 def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 	name_tokens = impl.__name__.split('_')
