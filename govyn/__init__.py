@@ -14,7 +14,7 @@ def run(srv: Any, name: Optional[str] = None) -> None:
 
 	openapi_schemas = build_schemas(route_defs, api_name = name or type(srv).__name__)
 	core_routes: Any = [
-		Route('/schema', lambda _: JSONResponse(openapi_schemas))
+		Route('/openapi/schema', lambda _: JSONResponse(openapi_schemas))
 	]
 
 	startup_func = getattr(srv, 'startup', None)
