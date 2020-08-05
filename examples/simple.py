@@ -2,6 +2,7 @@ from typing import Optional, List, Union
 from dataclasses import dataclass
 
 import govyn
+from govyn.errors import BadRequest
 
 @dataclass
 class TestInput:
@@ -42,5 +43,11 @@ class ExampleAPI:
 
 	async def get_binarychoice(self, is_set: bool) -> EmptyResponse:
 		return EmptyResponse()
+
+	async def get_exception(self) -> EmptyResponse:
+		raise BadRequest('an explanation')
+
+	async def get_exception_data(self) -> EmptyResponse:
+		raise BadRequest('an explanation', { 'test': 1 })
 
 govyn.run(ExampleAPI())

@@ -3,11 +3,13 @@ from typing import Any, Optional
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
+from starlette.middleware import Middleware
 import uvicorn
 
 from .route_def import make_route_def
 from .schemas import build_schemas
 from .endpoint import make_endpoint
+from .errors import JSONErrorMiddleware
 
 def run(srv: Any, name: Optional[str] = None) -> None:
 	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if not m.startswith('_') and m not in { 'startup', 'shutdown' } ]
@@ -25,6 +27,6 @@ def run(srv: Any, name: Optional[str] = None) -> None:
 	app = Starlette(routes = core_routes + [
 		Route(r.path, make_endpoint(r), methods = [ r.http_method.upper() ])
 		for r in route_defs
-	], on_startup = startup_funcs, on_shutdown = shutdown_funcs)
+	], on_startup = startup_funcs, on_shutdown = shutdown_funcs, middleware = [ Middleware(JSONErrorMiddleware) ])
 
 	uvicorn.run(app, host = "0.0.0.0", port = 80)
