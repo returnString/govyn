@@ -7,7 +7,7 @@ from starlette.testclient import TestClient
 from govyn import create_app
 from govyn.auth import Principal, HeaderAuthBackend
 
-class TestAuthBackend(HeaderAuthBackend):
+class HardcodedAuthBackend(HeaderAuthBackend):
 	def __init__(self) -> None:
 		super().__init__("Govyn-Token")
 		self.tokens = {
@@ -33,7 +33,7 @@ class AuthAPI:
 
 @pytest.fixture
 def client() -> TestClient:
-	return TestClient(create_app(AuthAPI(), auth_backend = TestAuthBackend()))
+	return TestClient(create_app(AuthAPI(), auth_backend = HardcodedAuthBackend()))
 
 def test_token(client: TestClient) -> None:
 	res = client.get('/', headers = { 'Govyn-Token': '1234' })
