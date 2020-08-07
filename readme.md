@@ -3,6 +3,8 @@
 
 A tiny framework for writing async HTTP APIs in typed Python.
 
+> **govyn** (verb) - ask, inquire, query, question, request ([Cornish Dictionary](https://www.cornishdictionary.org.uk/#govyn))
+
 # Features
 - Async everywhere!
 - Method params as query string arguments
