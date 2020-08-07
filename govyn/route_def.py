@@ -13,6 +13,7 @@ class ArgDef:
 	parser: _ParserType
 
 def _parse_bool(x: str) -> bool:
+	x = x.lower()
 	if x == "true":
 		return True
 	elif x == "false":
