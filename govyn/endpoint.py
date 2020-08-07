@@ -3,11 +3,11 @@ from dataclasses import asdict
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.exceptions import HTTPException
 from dacite.core import from_dict
 from dacite.exceptions import DaciteError
 
 from .route_def import RouteDef, ArgDef
+from .errors import BadRequest
 
 async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
 	ret: Dict[str, Any] = dict()
@@ -15,13 +15,13 @@ async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str
 		value = req.query_params.get(var_name)
 		if value is None:
 			if not arg_def.optional:
-				raise HTTPException(400)
+				raise BadRequest(f'missing required field: {var_name}')
 			ret[var_name] = None
 		else:
 			try:
 				ret[var_name] = arg_def.parser(value) # type: ignore
 			except ValueError as e:
-				raise HTTPException(400, str(e))
+				raise BadRequest(str(e))
 
 	return ret
 
@@ -33,7 +33,7 @@ async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, A
 	try:
 		body: Any = from_dict(arg_def.expected_type, json_body)
 	except DaciteError as e:
-		raise HTTPException(400, str(e))
+		raise BadRequest(str(e))
 
 	return { name: body }
 
