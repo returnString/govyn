@@ -9,6 +9,7 @@ _pytype_to_schema_type_lookup = {
 	str: 'string',
 	float: 'number',
 	bool: 'boolean',
+	type(None): 'null',
 }
 
 def pytype_to_schema(py_type: type) -> Dict[str, Any]:

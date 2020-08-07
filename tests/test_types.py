@@ -19,6 +19,10 @@ class CollectionTypes:
 	list_field: List[bool]
 	union_field: Union[str, int]
 
+@dataclass
+class OptionalTypes:
+	maybe_str_field: Optional[str]
+
 class EchoAPI:
 	async def get_scalars(self, str_field: str, int_field: int, float_field: float, bool_field: bool) -> ScalarTypes:
 		return ScalarTypes(str_field, int_field, float_field, bool_field)
@@ -27,6 +31,12 @@ class EchoAPI:
 		return body
 
 	async def post_collections(self, body: CollectionTypes) -> CollectionTypes:
+		return body
+
+	async def get_optional(self, maybe_str_field: Optional[str]) -> OptionalTypes:
+		return OptionalTypes(maybe_str_field)
+
+	async def post_optional(self, body: OptionalTypes) -> OptionalTypes:
 		return body
 
 @pytest.fixture
@@ -90,3 +100,27 @@ def test_post_invalid_list(client: TestClient, example_collections: Dict[str, An
 	example_collections['list_field'] = {}
 	res = client.post('/collections', json = example_collections)
 	assert res.status_code == 400
+
+def test_get_optional_present(client: TestClient) -> None:
+	example_optional = asdict(OptionalTypes('string'))
+	res = client.get('/optional', params = example_optional)
+	assert res.status_code == 200
+	assert res.json() == example_optional
+
+def test_get_optional_missing(client: TestClient) -> None:
+	example_optional = asdict(OptionalTypes(None))
+	res = client.get('/optional', params = example_optional)
+	assert res.status_code == 200
+	assert res.json() == example_optional
+
+def test_post_optional_present(client: TestClient) -> None:
+	example_optional = asdict(OptionalTypes('string'))
+	res = client.post('/optional', json = example_optional)
+	assert res.status_code == 200
+	assert res.json() == example_optional
+
+def test_post_optional_missing(client: TestClient) -> None:
+	example_optional = asdict(OptionalTypes(None))
+	res = client.post('/optional', json = example_optional)
+	assert res.status_code == 200
+	assert res.json() == example_optional
