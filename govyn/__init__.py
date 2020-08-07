@@ -4,6 +4,7 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 from starlette.middleware import Middleware
+from starlette.types import ASGIApp
 import uvicorn
 
 from .route_def import make_route_def
@@ -12,12 +13,7 @@ from .endpoint import make_endpoint
 from .errors import JSONErrorMiddleware
 from .auth import AuthBackend, AuthMiddleware
 
-def run(
-	srv: Any,
-	*,
-	name: Optional[str] = None,
-	auth_backend: Optional[AuthBackend] = None,
-	) -> None:
+def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[AuthBackend] = None) -> ASGIApp:
 	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if not m.startswith('_') and m not in { 'startup', 'shutdown' } ]
 
 	openapi_schemas = build_schemas(route_defs, api_name = name or type(srv).__name__)
@@ -38,4 +34,7 @@ def run(
 		for r in route_defs
 	], on_startup = startup_funcs, on_shutdown = shutdown_funcs, middleware = middleware)
 
-	uvicorn.run(app, host = "0.0.0.0", port = 80)
+	return app
+
+def run_app(app: ASGIApp, port: int = 80, host: str = "0.0.0.0") -> None:
+	uvicorn.run(app, host = host, port = port)
