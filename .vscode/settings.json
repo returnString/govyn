@@ -6,6 +6,5 @@
 		"**/.venv": true,
 		"**/.mypy_cache": true,
 		"**/*.egg-info": true
-	},
-	"python.pythonPath": ".venv/bin/python"
+	}
 }
