@@ -47,6 +47,8 @@ def make_endpoint(route: RouteDef) -> Any:
 
 	async def endpoint(req: Request) -> Any:
 		args = await parser(req, route.args)
+		if route.requires_principal:
+			args['principal'] = req.state.principal
 		res = await route.impl(**args)
 		return JSONResponse(asdict(res))
 

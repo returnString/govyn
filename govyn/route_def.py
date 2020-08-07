@@ -1,6 +1,8 @@
 from typing import Any, Union, Dict, Callable
 from dataclasses import dataclass
-from starlette.exceptions import HTTPException
+
+from .errors import BadRequest
+from .auth import Principal
 
 _ParserType = Callable[[ str ], Any]
 
@@ -15,7 +17,7 @@ def _parse_bool(x: str) -> bool:
 		return True
 	elif x == "false":
 		return False
-	raise HTTPException(400, 'invalid boolean value')
+	raise BadRequest('invalid boolean value')
 
 _parser_overrides: Dict[type, _ParserType] = {
 	bool: _parse_bool,
@@ -42,6 +44,7 @@ class RouteDef:
 	impl: Callable[..., Any]
 	args: Dict[str, ArgDef]
 	return_type: type
+	requires_principal: bool
 
 def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 	name_tokens = impl.__name__.split('_')
@@ -50,12 +53,18 @@ def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 	input_annotations = impl.__annotations__.copy()
 	return_type = input_annotations['return']
 	del input_annotations['return']
+	requires_principal = input_annotations.get('principal') is not None
+	if requires_principal:
+		del input_annotations['principal']
 
 	if http_method == 'post':
 		if len(input_annotations) != 1:
 			raise Exception('POST methods require one argument')
 
-	args = { name: make_arg_def(expected_type) for name, expected_type in input_annotations.items() }
+	args = {
+		name: make_arg_def(expected_type) for name, expected_type
+		in input_annotations.items()
+	}
 
 	return RouteDef(
 		path = '/' + '_'.join(name_tokens[1:]),
@@ -63,4 +72,5 @@ def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 		impl = impl,
 		args = args,
 		return_type = return_type,
+		requires_principal = requires_principal,
 	)
