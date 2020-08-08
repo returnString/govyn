@@ -21,13 +21,21 @@ def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[Auth
 		Route('/openapi/schema', lambda _: JSONResponse(openapi_schemas))
 	]
 
-	startup_func = getattr(srv, 'startup', None)
-	shutdown_func = getattr(srv, 'shutdown', None)
-	startup_funcs = [ startup_func ] if startup_func else []
-	shutdown_funcs = [ shutdown_func ] if shutdown_func else []
+	startup_funcs = []
+	shutdown_funcs = []
+
+	def _attach_lifecyle_methods(obj: Any) -> None:
+		if startup_func := getattr(obj, 'startup', None):
+			startup_funcs.append(startup_func)
+		if shutdown_func := getattr(obj, 'shutdown', None):
+			shutdown_funcs.append(shutdown_func)
+	
+	_attach_lifecyle_methods(srv)
+
 	middleware: Any = [ Middleware(JSONErrorMiddleware) ]
 	if auth_backend:
 		middleware.append(Middleware(AuthMiddleware, auth_backend = auth_backend))
+		_attach_lifecyle_methods(auth_backend)
 
 	app = Starlette(routes = core_routes + [
 		Route(r.path, make_endpoint(r), methods = [ r.http_method.upper() ])

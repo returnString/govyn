@@ -1,4 +1,4 @@
-from typing import Optional, List, Union, Dict, Any
+from typing import Optional, List, Union, Dict, Any, Generator
 from dataclasses import dataclass, asdict
 
 import pytest
@@ -40,8 +40,9 @@ class EchoAPI:
 		return body
 
 @pytest.fixture
-def client() -> TestClient:
-	return TestClient(create_app(EchoAPI()))
+def client() -> Generator[TestClient, None, None]:
+	with TestClient(create_app(EchoAPI())) as c:
+		yield c # type: ignore
 
 @pytest.fixture
 def example_scalars() -> Dict[str, Any]:

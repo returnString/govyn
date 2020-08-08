@@ -1,4 +1,4 @@
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Union, Dict, Generator
 from dataclasses import dataclass, asdict
 
 import pytest
@@ -10,6 +10,8 @@ from govyn.auth import Principal, HeaderAuthBackend
 class HardcodedAuthBackend(HeaderAuthBackend):
 	def __init__(self) -> None:
 		super().__init__("Govyn-Token")
+
+	async def startup(self) -> None:
 		self.tokens = {
 			'1234': 'user1',
 			'5678': 'user2',
@@ -32,8 +34,9 @@ class AuthAPI:
 		return AuthedResponse(principal.id)
 
 @pytest.fixture
-def client() -> TestClient:
-	return TestClient(create_app(AuthAPI(), auth_backend = HardcodedAuthBackend()))
+def client() -> Generator[TestClient, None, None]:
+	with TestClient(create_app(AuthAPI(), auth_backend = HardcodedAuthBackend())) as c:
+		yield c # type: ignore
 
 def test_token(client: TestClient) -> None:
 	res = client.get('/', headers = { 'Govyn-Token': '1234' })
