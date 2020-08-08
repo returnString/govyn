@@ -1,11 +1,12 @@
-from typing import Optional, List, Union, Dict, Generator
+from typing import Optional, List, Union, Dict
 from dataclasses import dataclass, asdict
 
 import pytest
 from starlette.testclient import TestClient
 
-from govyn import create_app
 from govyn.auth import Principal, HeaderAuthBackend, privileged
+
+from .helpers import make_client
 
 class HardcodedAuthBackend(HeaderAuthBackend):
 	header = "Govyn-Token"
@@ -32,10 +33,7 @@ class AuthAPI:
 	async def get_supersecret(self, principal: Principal) -> AuthedResponse:
 		return AuthedResponse('hot take')
 
-@pytest.fixture
-def client() -> Generator[TestClient, None, None]:
-	with TestClient(create_app(AuthAPI(), auth_backend = HardcodedAuthBackend())) as c:
-		yield c # type: ignore
+client = make_client(AuthAPI, auth_backend = HardcodedAuthBackend())
 
 def test_token(client: TestClient) -> None:
 	res = client.get('/', headers = { 'Govyn-Token': '1234' })

@@ -6,6 +6,8 @@ from starlette.testclient import TestClient
 
 from govyn import create_app
 
+from .helpers import make_client
+
 @dataclass
 class ScalarTypes:
 	str_field: str
@@ -42,10 +44,7 @@ class EchoAPI:
 	async def get_list(self, numbers: List[int]) -> List[int]:
 		return numbers
 
-@pytest.fixture
-def client() -> Generator[TestClient, None, None]:
-	with TestClient(create_app(EchoAPI())) as c:
-		yield c # type: ignore
+client = make_client(EchoAPI)
 
 @pytest.fixture
 def example_scalars() -> Dict[str, Any]:

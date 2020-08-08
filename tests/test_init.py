@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 import pytest
 from starlette.testclient import TestClient
 
-from govyn import create_app
+from .helpers import make_client
 
 @dataclass
 class Response:
@@ -17,10 +17,7 @@ class AsyncInitAPI:
 	async def get(self) -> Response:
 		return Response(self.required_value)
 
-@pytest.fixture
-def client() -> Generator[TestClient, None, None]:
-	with TestClient(create_app(AsyncInitAPI())) as c:
-		yield c # type: ignore
+client = make_client(AsyncInitAPI)
 
 def test_async_startup(client: TestClient) -> None:
 	res = client.get('/')
