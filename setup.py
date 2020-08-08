@@ -5,7 +5,7 @@ with open('readme.md', 'r', encoding = 'utf-8') as fh:
 
 setup(
 	name = 'govyn',
-	version = '0.1.3',
+	version = '0.1.4',
 	author = 'Ruan Pearce-Authers',
 	author_email = 'ruanpa@outlook.com',
 	description = 'HTTP APIs in typed Python',
