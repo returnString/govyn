@@ -5,7 +5,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from govyn import create_app
-from govyn.auth import Principal, HeaderAuthBackend
+from govyn.auth import Principal, HeaderAuthBackend, privileged
 
 class HardcodedAuthBackend(HeaderAuthBackend):
 	def __init__(self) -> None:
@@ -13,16 +13,12 @@ class HardcodedAuthBackend(HeaderAuthBackend):
 
 	async def startup(self) -> None:
 		self.tokens = {
-			'1234': 'user1',
-			'5678': 'user2',
+			'1234': Principal('user1', set()),
+			'5678': Principal('user2', { 'super_secret_access' }),
 		}
 
 	async def principal_from_header(self, token: str) -> Optional[Principal]:
-		principal_id = self.tokens.get(token)
-		if principal_id is None:
-			return None
-
-		return Principal(principal_id)
+		return self.tokens.get(token)
 
 @dataclass
 class AuthedResponse:
@@ -32,6 +28,10 @@ class AuthedResponse:
 class AuthAPI:
 	async def get(self, principal: Principal) -> AuthedResponse:
 		return AuthedResponse(principal.id)
+
+	@privileged('super_secret_access')
+	async def get_supersecret(self, principal: Principal) -> AuthedResponse:
+		return AuthedResponse('hot take')
 
 @pytest.fixture
 def client() -> Generator[TestClient, None, None]:
@@ -54,3 +54,12 @@ def test_token_invalid(client: TestClient) -> None:
 def test_token_missing(client: TestClient) -> None:
 	res = client.get('/')
 	assert res.status_code == 401
+
+def test_privileges(client: TestClient) -> None:
+	res = client.get('/supersecret', headers = { 'Govyn-Token': '5678' })
+	assert res.status_code == 200
+	assert res.json() == asdict(AuthedResponse('hot take'))
+
+def test_privileges_insufficient(client: TestClient) -> None:
+	res = client.get('/supersecret', headers = { 'Govyn-Token': '1234' })
+	assert res.status_code == 403
