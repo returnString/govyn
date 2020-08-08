@@ -1,18 +1,18 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
-with open("readme.md", "r") as fh:
+with open('readme.md', 'r', encoding = 'utf-8') as fh:
 	long_description = fh.read()
 
 setup(
 	name = 'govyn',
-	version = '0.1.1',
+	version = '0.1.3',
 	author = 'Ruan Pearce-Authers',
 	author_email = 'ruanpa@outlook.com',
 	description = 'HTTP APIs in typed Python',
 	url = 'https://github.com/returnString/govyn',
 	long_description = long_description,
 	long_description_content_type = 'text/markdown',
-	packages = find_packages(),
+	packages = [ 'govyn' ],
 	package_data = {
 		'govyn': [ 'py.typed' ],
 	},
