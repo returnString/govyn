@@ -8,9 +8,11 @@ _ParserType = Callable[[ str ], Any]
 
 @dataclass
 class ArgDef:
-	expected_type: type
+	original_type: type
+	element_type: type
 	optional: bool
 	parser: _ParserType
+	is_list: bool
 
 def _parse_bool(x: str) -> bool:
 	x = x.lower()
@@ -24,18 +26,24 @@ _parser_overrides: Dict[type, _ParserType] = {
 	bool: _parse_bool,
 }
 
-def make_arg_def(expected_type: type) -> ArgDef:
-	is_optional = getattr(expected_type, '__origin__', None) == Union and getattr(expected_type, '__args__')[1] == type(None)
-
+def make_arg_def(original_type: type) -> ArgDef:
+	element_type = original_type
+	is_optional = getattr(element_type, '__origin__', None) == Union and getattr(element_type, '__args__')[1] == type(None)
 	if is_optional:
-		expected_type = getattr(expected_type, '__args__')[0]
+		element_type = getattr(element_type, '__args__')[0]
 
-	parser = _parser_overrides.get(expected_type, expected_type)
+	is_list = getattr(element_type, '__origin__', None) == list
+	if is_list:
+		element_type = getattr(element_type, '__args__')[0]
+
+	parser = _parser_overrides.get(element_type, element_type)
 
 	return ArgDef(
-		expected_type = expected_type,
+		original_type = original_type,
+		element_type = element_type,
 		optional = is_optional,
 		parser = parser,
+		is_list = is_list,
 	)
 
 @dataclass
@@ -63,7 +71,7 @@ def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 			raise Exception('POST methods require one argument')
 
 	args = {
-		name: make_arg_def(expected_type) for name, expected_type
+		name: make_arg_def(element_type) for name, element_type
 		in input_annotations.items()
 	}
 

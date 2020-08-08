@@ -39,6 +39,9 @@ class EchoAPI:
 	async def post_optional(self, body: OptionalTypes) -> OptionalTypes:
 		return body
 
+	async def get_list(self, numbers: List[int]) -> List[int]:
+		return numbers
+
 @pytest.fixture
 def client() -> Generator[TestClient, None, None]:
 	with TestClient(create_app(EchoAPI())) as c:
@@ -125,3 +128,9 @@ def test_post_optional_missing(client: TestClient) -> None:
 	res = client.post('/optional', json = example_optional)
 	assert res.status_code == 200
 	assert res.json() == example_optional
+
+def test_get_raw_list(client: TestClient) -> None:
+	example_list = [ 1, 2, 3 ]
+	res = client.get('/list', params = { 'numbers': example_list })
+	assert res.status_code == 200
+	assert res.json() == example_list

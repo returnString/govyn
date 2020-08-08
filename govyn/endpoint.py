@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -9,20 +9,25 @@ from dacite.exceptions import DaciteError
 from .route_def import RouteDef, ArgDef
 from .errors import BadRequest
 
+def parse_value(arg: ArgDef, var_name: str, str_value: str) -> Any:
+	try:
+		return arg.parser(str_value) # type: ignore
+	except ValueError as e:
+		raise BadRequest(f'invalid value for field {var_name} of type {arg.element_type.__name__}')
+
 async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
 	ret: Dict[str, Any] = dict()
 	for var_name, arg_def in args.items():
-		value = req.query_params.get(var_name)
-		if value is None:
-			if not arg_def.optional:
-				raise BadRequest(f'missing required field: {var_name}')
-			ret[var_name] = None
+		if arg_def.is_list:
+			ret[var_name] = [ parse_value(arg_def, var_name, v) for v in req.query_params.getlist(var_name) ]
 		else:
-			try:
-				ret[var_name] = arg_def.parser(value) # type: ignore
-			except ValueError as e:
-				raise BadRequest(f'invalid value for field {var_name} of type {arg_def.expected_type.__name__}')
-
+			value = req.query_params.get(var_name)
+			if value is None:
+				if not arg_def.optional:
+					raise BadRequest(f'missing required field: {var_name}')
+				ret[var_name] = None
+			else:
+				ret[var_name] = parse_value(arg_def, var_name, value)
 	return ret
 
 async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
@@ -31,7 +36,7 @@ async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, A
 	arg_def = args[name]
 
 	try:
-		body: Any = from_dict(arg_def.expected_type, json_body)
+		body: Any = from_dict(arg_def.element_type, json_body)
 	except DaciteError as e:
 		raise BadRequest(str(e))
 
@@ -50,6 +55,8 @@ def make_endpoint(route: RouteDef) -> Any:
 		if route.requires_principal:
 			args['principal'] = req.state.principal
 		res = await route.impl(**args)
-		return JSONResponse(asdict(res))
+		if is_dataclass(res):
+			res = asdict(res)
+		return JSONResponse(res)
 
 	return endpoint

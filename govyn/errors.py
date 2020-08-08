@@ -1,6 +1,7 @@
 from typing import Any, Optional, ClassVar, Callable, Awaitable
 from dataclasses import dataclass
 from http import HTTPStatus
+import traceback
 
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
@@ -44,4 +45,5 @@ class JSONErrorMiddleware(BaseHTTPMiddleware):
 		except HTTPError as e:
 			return error_response(e.code, e.desc, e.data)
 		except Exception as e:
+			traceback.print_exc()
 			return error_response(500, None, None)

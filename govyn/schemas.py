@@ -66,7 +66,7 @@ def build_schemas(route_defs: List[RouteDef], api_name: str) -> Dict[str, Any]:
 			spec['parameters'] = [ {
 					'name': arg_name,
 					'in': 'query',
-					'schema': pytype_to_schema(arg_def.expected_type),
+					'schema': pytype_to_schema(arg_def.original_type),
 					'required': not arg_def.optional,
 				}
 				for arg_name, arg_def in route_def.args.items()
@@ -76,7 +76,7 @@ def build_schemas(route_defs: List[RouteDef], api_name: str) -> Dict[str, Any]:
 				'required': True,
 				'content': {
 					'application/json': {
-						'schema': pytype_to_schema(list(route_def.args.values())[0].expected_type),
+						'schema': pytype_to_schema(list(route_def.args.values())[0].original_type),
 					},
 				},
 			}
