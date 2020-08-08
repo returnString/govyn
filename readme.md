@@ -1,5 +1,5 @@
 # govyn
-![Test](https://github.com/returnString/govyn/workflows/Test/badge.svg) [![PyPI version](https://badge.fury.io/py/govyn.svg)](https://pypi.org/project/govyn) [![codecov](https://codecov.io/gh/returnString/govyn/branch/main/graph/badge.svg)](https://codecov.io/gh/returnString/govyn)
+![Tests](https://github.com/returnString/govyn/workflows/Tests/badge.svg) [![PyPI version](https://badge.fury.io/py/govyn.svg)](https://pypi.org/project/govyn) [![codecov](https://codecov.io/gh/returnString/govyn/branch/main/graph/badge.svg)](https://codecov.io/gh/returnString/govyn)
 
 A tiny framework for writing async HTTP APIs in typed Python.
 
