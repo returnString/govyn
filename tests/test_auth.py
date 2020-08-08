@@ -8,8 +8,7 @@ from govyn import create_app
 from govyn.auth import Principal, HeaderAuthBackend, privileged
 
 class HardcodedAuthBackend(HeaderAuthBackend):
-	def __init__(self) -> None:
-		super().__init__("Govyn-Token")
+	header = "Govyn-Token"
 
 	async def startup(self) -> None:
 		self.tokens = {

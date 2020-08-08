@@ -1,4 +1,4 @@
-from typing import Set, Optional, Dict, Protocol, Callable, TypeVar, Any, cast
+from typing import Set, Optional, Dict, Protocol, Callable, TypeVar, Any, ClassVar, cast
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from functools import wraps
@@ -33,8 +33,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 		return await call_next(req)
 
 class HeaderAuthBackend(ABC):
-	def __init__(self, header: str) -> None:
-		self.header = header
+	header: ClassVar[str]
 
 	async def resolve_principal(self, req: Request) -> Optional[Principal]:
 		token = req.headers.get(self.header)
