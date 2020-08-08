@@ -10,6 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 class HTTPError(Exception):
 	desc: str
 	data: Optional[Any] = None
+	code: ClassVar[int]
 
 @dataclass
 class BadRequest(HTTPError):
@@ -27,15 +28,20 @@ class Forbidden(HTTPError):
 class Conflict(HTTPError):
 	code = 409
 
+def error_response(code: int, desc: Optional[str], data: Optional[Any]) -> JSONResponse:
+	return JSONResponse({
+		'error_type': HTTPStatus(code).phrase,
+		'error_description': desc,
+		'error_data': data,
+	}, code)
+
 class JSONErrorMiddleware(BaseHTTPMiddleware):
 	async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+		# TODO: logging
 		try:
 			response = await call_next(request)
 			return response
 		except HTTPError as e:
-			code: int = e.code # type: ignore
-			return JSONResponse({
-				'error_type': HTTPStatus(code).phrase,
-				'error_description': e.desc,
-				'error_data': e.data,
-			}, code)
+			return error_response(e.code, e.desc, e.data)
+		except Exception as e:
+			return error_response(500, None, None)
