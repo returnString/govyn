@@ -28,7 +28,7 @@ jobs:
     - name: Commit new version
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: 🚢 Release PyPI v${{ env.VERSION }}
+        commit_message: 🚢 Upload v${{ env.VERSION }} to PyPI
     - name: Build release
       run: |
         python setup.py sdist bdist_wheel
