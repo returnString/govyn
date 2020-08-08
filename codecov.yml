@@ -1,0 +1,5 @@
+codecov:
+  branch: main
+  status:
+    project: off
+    patch: off
