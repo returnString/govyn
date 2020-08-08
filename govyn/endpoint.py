@@ -21,7 +21,7 @@ async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str
 			try:
 				ret[var_name] = arg_def.parser(value) # type: ignore
 			except ValueError as e:
-				raise BadRequest(str(e))
+				raise BadRequest(f'invalid value for field {var_name} of type {arg_def.expected_type.__name__}')
 
 	return ret
 

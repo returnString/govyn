@@ -18,7 +18,7 @@ def _parse_bool(x: str) -> bool:
 		return True
 	elif x == "false":
 		return False
-	raise BadRequest('invalid boolean value')
+	raise ValueError()
 
 _parser_overrides: Dict[type, _ParserType] = {
 	bool: _parse_bool,
