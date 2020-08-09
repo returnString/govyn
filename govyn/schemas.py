@@ -95,11 +95,12 @@ def build_schemas(route_defs: List[RouteDef], api_name: str, auth_backend: Optio
 	}
 
 	if auth_backend:
+		auth_name, spec = auth_backend.openapi_spec()
 		openapi_spec['components']['securitySchemes'] = {
-			'auth': auth_backend.openapi_spec(),
+			auth_name: spec,
 		}
 		openapi_spec['security'] = [
-			{ 'auth': [] },
+			{ auth_name: [] },
 		]
 
 	return openapi_spec

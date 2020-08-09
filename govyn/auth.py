@@ -1,4 +1,4 @@
-from typing import Set, Optional, Dict, Protocol, Callable, TypeVar, Any, ClassVar, cast
+from typing import Set, Optional, Dict, Protocol, Callable, TypeVar, Any, ClassVar, Tuple, cast
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from functools import wraps
@@ -19,7 +19,7 @@ class AuthBackend(Protocol):
 	async def resolve_principal(self, req: Request) -> Optional[Principal]:
 		...
 
-	def openapi_spec(self) -> Dict[str, Any]:
+	def openapi_spec(self) -> Tuple[str, Dict[str, Any]]:
 		...
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -45,8 +45,8 @@ class HeaderAuthBackend(ABC):
 
 		return await self.principal_from_header(token)
 
-	def openapi_spec(self) -> Dict[str, Any]:
-		return {
+	def openapi_spec(self) -> Tuple[str, Dict[str, Any]]:
+		return 'API key', {
 			'type': 'apiKey',
 			'in': 'header',
 			'name': self.header,
