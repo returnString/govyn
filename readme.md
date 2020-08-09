@@ -13,6 +13,7 @@ A tiny framework for writing async HTTP APIs in typed Python.
 - OpenAPI support with built-in routes:
 	- `/openapi/schema`: OpenAPI v3 schema as JSON
 	- `/openapi/swagger`: embedded [Swagger UI](https://swagger.io/tools/swagger-ui/) page for testing
+	- `/openapi/redoc`: embedded [Redoc](https://redoc.ly/redoc) documentation page
 
 # Example
 ```python
