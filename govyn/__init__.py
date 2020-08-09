@@ -1,7 +1,7 @@
 from typing import Any, Optional, Dict, List
 
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, HTMLResponse
 from starlette.routing import Route
 from starlette.middleware import Middleware
 from starlette.types import ASGIApp
@@ -9,16 +9,21 @@ import uvicorn
 
 from .route_def import make_route_def
 from .schemas import build_schemas
+from .swagger import build_swagger_ui
 from .endpoint import make_endpoint
 from .errors import JSONErrorMiddleware
 from .auth import AuthBackend, AuthMiddleware
 
 def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[AuthBackend] = None) -> ASGIApp:
+	name = name or type(srv).__name__
 	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if not m.startswith('_') and m not in { 'startup', 'shutdown' } ]
 
-	openapi_schemas = build_schemas(route_defs, api_name = name or type(srv).__name__)
+	openapi_schemas = build_schemas(route_defs, api_name = name)
+	swagger_ui = build_swagger_ui(name)
+
 	core_routes: Any = [
-		Route('/openapi/schema', lambda _: JSONResponse(openapi_schemas))
+		Route('/openapi/swagger', lambda _: HTMLResponse(swagger_ui)),
+		Route('/openapi/schema', lambda _: JSONResponse(openapi_schemas)),
 	]
 
 	startup_funcs = []
