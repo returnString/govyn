@@ -10,6 +10,7 @@ import uvicorn
 from .route_def import make_route_def
 from .schemas import build_schemas
 from .swagger import build_swagger_ui
+from .redoc import build_redoc_ui
 from .endpoint import make_endpoint
 from .errors import JSONErrorMiddleware
 from .auth import AuthBackend, AuthMiddleware
@@ -28,6 +29,7 @@ def create_app(
 
 	openapi_schemas = build_schemas(route_defs, name, auth_backend)
 	swagger_ui = build_swagger_ui(name)
+	redoc_ui = build_redoc_ui(name)
 
 	startup_funcs = []
 	shutdown_funcs = []
@@ -55,8 +57,9 @@ def create_app(
 
 	openapi_app = Starlette(
 		routes = [
-			Route('/swagger', lambda _: HTMLResponse(swagger_ui)),
 			Route('/schema', lambda _: JSONResponse(openapi_schemas)),
+			Route('/swagger', lambda _: HTMLResponse(swagger_ui)),
+			Route('/redoc', lambda _: HTMLResponse(redoc_ui)),
 		],
 	)
 
