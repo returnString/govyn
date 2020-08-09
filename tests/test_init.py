@@ -1,4 +1,3 @@
-from typing import Optional, List, Union, Dict, Any, Generator
 from dataclasses import dataclass, asdict
 
 import pytest

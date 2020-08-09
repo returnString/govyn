@@ -42,7 +42,7 @@ def create_app(
 	
 	_attach_lifecyle_methods(srv)
 
-	middleware: Any = [ Middleware(JSONErrorMiddleware) ]
+	middleware = [ Middleware(JSONErrorMiddleware) ]
 	if auth_backend:
 		middleware.append(Middleware(AuthMiddleware, auth_backend = auth_backend))
 		_attach_lifecyle_methods(auth_backend)

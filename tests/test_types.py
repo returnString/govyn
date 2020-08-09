@@ -1,10 +1,8 @@
-from typing import Optional, List, Union, Dict, Any, Generator
+from typing import Optional, List, Union, Dict, Any
 from dataclasses import dataclass, asdict
 
 import pytest
 from starlette.testclient import TestClient
-
-from govyn import create_app
 
 from .helpers import make_client
 

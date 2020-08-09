@@ -1,4 +1,4 @@
-from typing import Optional, List, Union, Dict
+from typing import Optional
 from dataclasses import dataclass, asdict
 
 import pytest

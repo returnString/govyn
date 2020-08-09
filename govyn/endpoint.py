@@ -1,8 +1,8 @@
-from typing import Dict, Any
+from typing import Dict, Any, Callable, Awaitable
 from dataclasses import asdict, is_dataclass
 
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import Response, JSONResponse
 from dacite.core import from_dict
 from dacite.exceptions import DaciteError
 
@@ -47,10 +47,10 @@ _parser_dict = {
 	'post': json_body_parser,
 }
 
-def make_endpoint(route: RouteDef) -> Any:
+def make_endpoint(route: RouteDef) -> Callable[[ Request ], Awaitable[Response]]:
 	parser = _parser_dict[route.http_method]
 
-	async def endpoint(req: Request) -> Any:
+	async def endpoint(req: Request) -> Response:
 		args = await parser(req, route.args)
 		if route.requires_principal:
 			args['principal'] = req.state.principal
