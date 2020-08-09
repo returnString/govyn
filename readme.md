@@ -51,6 +51,10 @@ app = create_app(CalculatorAPI())
 run_app(app)
 ```
 
+Try out the built-in Swagger UI on this [example Heroku deployment](https://govyn-demo.herokuapp.com/openapi/swagger), built from source available in the [govyn-demo](https://github.com/returnString/govyn-demo) repository!
+
+Or, run the server locally and hit it with curl:
+
 ```bash
 > curl "http://localhost/add?a=10&b=32"
 {"result": 42}
