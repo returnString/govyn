@@ -1,8 +1,9 @@
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 from dataclasses import is_dataclass, fields
 from collections import defaultdict
 
 from .route_def import RouteDef
+from .auth import AuthBackend
 
 _pytype_to_schema_type_lookup = {
 	int: 'integer',
@@ -45,7 +46,7 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 		'type': schema_type,
 	}
 
-def build_schemas(route_defs: List[RouteDef], api_name: str) -> Dict[str, Any]:
+def build_schemas(route_defs: List[RouteDef], api_name: str, auth_backend: Optional[AuthBackend]) -> Dict[str, Any]:
 	paths: Dict[str, Any] = defaultdict(dict)
 	for route_def in route_defs:
 		spec: Any = {
@@ -83,13 +84,22 @@ def build_schemas(route_defs: List[RouteDef], api_name: str) -> Dict[str, Any]:
 
 		paths[route_def.path][route_def.http_method] = spec
 
-	openapi_spec = {
+	openapi_spec: Dict[str, Any] = {
 		'openapi': '3.0.0',
 		'info': {
 			'title': api_name,
 			'version': '0.1',
 		},
 		'paths': paths,
+		'components': {},
 	}
+
+	if auth_backend:
+		openapi_spec['components']['securitySchemes'] = {
+			'auth': auth_backend.openapi_spec(),
+		}
+		openapi_spec['security'] = [
+			{ 'auth': [] },
+		]
 
 	return openapi_spec

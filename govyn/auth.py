@@ -19,6 +19,9 @@ class AuthBackend(Protocol):
 	async def resolve_principal(self, req: Request) -> Optional[Principal]:
 		...
 
+	def openapi_spec(self) -> Dict[str, Any]:
+		...
+
 class AuthMiddleware(BaseHTTPMiddleware):
 	def __init__(self, app: ASGIApp, auth_backend: AuthBackend) -> None:
 		super().__init__(app)
@@ -41,6 +44,13 @@ class HeaderAuthBackend(ABC):
 			raise Unauthorised(f'missing header: {self.header}')
 
 		return await self.principal_from_header(token)
+
+	def openapi_spec(self) -> Dict[str, Any]:
+		return {
+			'type': 'apiKey',
+			'in': 'header',
+			'name': self.header,
+		}
 
 	@abstractmethod
 	async def principal_from_header(self, value: str) -> Optional[Principal]:

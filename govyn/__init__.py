@@ -18,7 +18,7 @@ def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[Auth
 	name = name or type(srv).__name__
 	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if not m.startswith('_') and m not in { 'startup', 'shutdown' } ]
 
-	openapi_schemas = build_schemas(route_defs, api_name = name)
+	openapi_schemas = build_schemas(route_defs, name, auth_backend)
 	swagger_ui = build_swagger_ui(name)
 
 	startup_funcs = []
