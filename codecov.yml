@@ -1,4 +1,4 @@
-codecov:
+coverage:
   branch: main
   status:
     project: off
