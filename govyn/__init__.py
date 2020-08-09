@@ -2,7 +2,7 @@ from typing import Any, Optional, Dict, List
 
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse, HTMLResponse
-from starlette.routing import Route
+from starlette.routing import Route, Mount
 from starlette.middleware import Middleware
 from starlette.types import ASGIApp
 import uvicorn
@@ -21,11 +21,6 @@ def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[Auth
 	openapi_schemas = build_schemas(route_defs, api_name = name)
 	swagger_ui = build_swagger_ui(name)
 
-	core_routes: Any = [
-		Route('/openapi/swagger', lambda _: HTMLResponse(swagger_ui)),
-		Route('/openapi/schema', lambda _: JSONResponse(openapi_schemas)),
-	]
-
 	startup_funcs = []
 	shutdown_funcs = []
 
@@ -42,12 +37,25 @@ def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[Auth
 		middleware.append(Middleware(AuthMiddleware, auth_backend = auth_backend))
 		_attach_lifecyle_methods(auth_backend)
 
-	app = Starlette(routes = core_routes + [
-		Route(r.path, make_endpoint(r), methods = [ r.http_method.upper() ])
-		for r in route_defs
-	], on_startup = startup_funcs, on_shutdown = shutdown_funcs, middleware = middleware)
+	core_app = Starlette(
+		routes = [
+			Route(r.path, make_endpoint(r), methods = [ r.http_method.upper() ])
+			for r in route_defs
+		],
+		middleware = middleware,
+	)
 
-	return app
+	openapi_app = Starlette(
+		routes = [
+			Route('/swagger', lambda _: HTMLResponse(swagger_ui)),
+			Route('/schema', lambda _: JSONResponse(openapi_schemas)),
+		],
+	)
+
+	return Starlette(routes = [
+		Mount('/openapi', openapi_app),
+		Mount('/', core_app),
+	], on_startup = startup_funcs, on_shutdown = shutdown_funcs)
 
 def run_app(app: ASGIApp, port: int = 80, host: str = "0.0.0.0") -> None:
 	uvicorn.run(app, host = host, port = port)
