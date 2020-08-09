@@ -13,9 +13,17 @@ from .swagger import build_swagger_ui
 from .endpoint import make_endpoint
 from .errors import JSONErrorMiddleware
 from .auth import AuthBackend, AuthMiddleware
+from .security import CORSConfig, permissive_cors_config, cors_middleware_from_config
 
-def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[AuthBackend] = None) -> ASGIApp:
+def create_app(
+		srv: Any,
+		name: Optional[str] = None,
+		auth_backend: Optional[AuthBackend] = None,
+		cors_config: Optional[CORSConfig] = None,
+	) -> ASGIApp:
 	name = name or type(srv).__name__
+	cors_config = cors_config or permissive_cors_config()
+
 	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if not m.startswith('_') and m not in { 'startup', 'shutdown' } ]
 
 	openapi_schemas = build_schemas(route_defs, name, auth_backend)
@@ -55,7 +63,7 @@ def create_app(srv: Any, name: Optional[str] = None, auth_backend: Optional[Auth
 	return Starlette(routes = [
 		Mount('/openapi', openapi_app),
 		Mount('/', core_app),
-	], on_startup = startup_funcs, on_shutdown = shutdown_funcs)
+	], on_startup = startup_funcs, on_shutdown = shutdown_funcs, middleware = [ cors_middleware_from_config(cors_config) ])
 
 def run_app(app: ASGIApp, port: int = 80, host: str = "0.0.0.0") -> None:
 	uvicorn.run(app, host = host, port = port)
