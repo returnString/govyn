@@ -9,9 +9,10 @@ A tiny framework for writing async HTTP APIs in typed Python.
 - Async everywhere!
 - Method params as query string arguments
 - Dataclasses as request bodies
-- Automatic JSON conversion for request bodies and responses
-- 🚧 Authentication support 🚧
-- 🚧 OpenAPI schema generation 🚧
+- Authentication with principals and privileges
+- OpenAPI support with built-in routes:
+	- `/openapi/schema`: OpenAPI v3 schema as JSON
+	- `/openapi/swagger`: embedded [Swagger UI](https://swagger.io/tools/swagger-ui/) page for testing
 
 # Example
 ```python
