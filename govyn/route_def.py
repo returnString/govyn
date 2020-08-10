@@ -20,7 +20,7 @@ def _parse_bool(x: str) -> bool:
 		return True
 	elif x == "false":
 		return False
-	raise ValueError()
+	raise ValueError('expected true or false')
 
 _parser_overrides: Dict[type, _ParserType] = {
 	bool: _parse_bool,
@@ -32,7 +32,7 @@ def create_enum_parser(options: Set[T], elem_parser: Callable[[ str ], T]) -> Ca
 		if x in options:
 			return elem_parser(x)
 		else:
-			raise ValueError()
+			raise ValueError(f'expected one of {options}')
 	return _impl
 
 def make_arg_def(original_type: type) -> ArgDef:

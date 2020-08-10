@@ -13,7 +13,7 @@ def parse_value(arg: ArgDef, var_name: str, str_value: str) -> Any:
 	try:
 		return arg.parser(str_value) # type: ignore
 	except ValueError as e:
-		raise BadRequest(f'invalid value for field {var_name} of type {arg.element_type.__name__}')
+		raise BadRequest(f'invalid value for field {var_name} of type {arg.element_type.__name__}: {str(e)}')
 
 async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
 	ret: Dict[str, Any] = dict()
