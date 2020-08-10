@@ -1,6 +1,7 @@
-from typing import Dict, Any, List, Union, Optional
+from typing import Dict, Any, List, Union, Optional, Literal
 from dataclasses import is_dataclass, fields
 from collections import defaultdict
+from enum import Enum
 
 from .route_def import RouteDef
 from .auth import AuthBackend
@@ -17,12 +18,13 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 	origin_type = getattr(py_type, '__origin__', None)
 	generic_types = getattr(py_type, '__args__', None)
 
-	if is_dataclass(py_type):
-		return {
-			'type': 'object',
-			'properties': { f.name: pytype_to_schema(f.type) for f in fields(py_type) },
-		}
-	elif origin_type is not None:
+	if not origin_type:
+		if is_dataclass(py_type):
+			return {
+				'type': 'object',
+				'properties': { f.name: pytype_to_schema(f.type) for f in fields(py_type) },
+			}
+	else:
 		if origin_type == list:
 			return {
 				'type': 'array',
@@ -39,6 +41,11 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 		elif origin_type == Union:
 			return {
 				'oneOf': [ pytype_to_schema(t) for t in generic_types ],
+			}
+		elif origin_type == Literal:
+			return {
+				'type': _pytype_to_schema_type_lookup[type(generic_types[0])],
+				'enum': generic_types,
 			}
 
 	schema_type = _pytype_to_schema_type_lookup[py_type]

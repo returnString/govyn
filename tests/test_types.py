@@ -1,5 +1,6 @@
-from typing import Optional, List, Union, Dict, Any
+from typing import Optional, List, Union, Dict, Any, Literal
 from dataclasses import dataclass, asdict
+from enum import Enum
 
 import pytest
 from starlette.testclient import TestClient
@@ -23,6 +24,12 @@ class CollectionTypes:
 class OptionalTypes:
 	maybe_str_field: Optional[str]
 
+StringEnum = Literal["type1", "type2", "type3"]
+
+@dataclass
+class EnumTypes:
+	string_enum_field: StringEnum
+
 class EchoAPI:
 	async def get_scalars(self, str_field: str, int_field: int, float_field: float, bool_field: bool) -> ScalarTypes:
 		return ScalarTypes(str_field, int_field, float_field, bool_field)
@@ -41,6 +48,12 @@ class EchoAPI:
 
 	async def get_list(self, numbers: List[int]) -> List[int]:
 		return numbers
+
+	async def get_enums(self, string_selection: StringEnum) -> EnumTypes:
+		return EnumTypes(string_selection)
+
+	async def post_enums(self, body: EnumTypes) -> EnumTypes:
+		return body
 
 client = make_client(EchoAPI)
 
@@ -131,3 +144,25 @@ def test_get_raw_list(client: TestClient) -> None:
 	res = client.get('/list', params = { 'numbers': example_list })
 	assert res.status_code == 200
 	assert res.json() == example_list
+
+def test_get_enum(client: TestClient) -> None:
+	example_enums = EnumTypes('type1')
+	res = client.get('/enums', params = { 'string_selection': example_enums.string_enum_field })
+	assert res.status_code == 200
+	assert res.json() == asdict(example_enums)
+
+def test_get_enum_invalid_option(client: TestClient) -> None:
+	example_enums = EnumTypes('not an option') # type: ignore
+	res = client.get('/enums', params = { 'string_selection': example_enums.string_enum_field })
+	assert res.status_code == 400
+
+def test_post_enum(client: TestClient) -> None:
+	example_enums = asdict(EnumTypes('type1'))
+	res = client.post('/enums', json = example_enums)
+	assert res.status_code == 200
+	assert res.json() == example_enums
+
+def test_post_enum_invalid(client: TestClient) -> None:
+	example_enums = asdict(EnumTypes('not an option')) # type: ignore
+	res = client.post('/enums', json = example_enums)
+	assert res.status_code == 400

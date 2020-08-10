@@ -1,4 +1,4 @@
-from typing import Any, Union, Dict, Callable
+from typing import Any, Union, Dict, Callable, Literal, Set, TypeVar
 from dataclasses import dataclass
 
 from .errors import BadRequest
@@ -26,6 +26,15 @@ _parser_overrides: Dict[type, _ParserType] = {
 	bool: _parse_bool,
 }
 
+T = TypeVar('T')
+def create_enum_parser(options: Set[T], elem_parser: Callable[[ str ], T]) -> Callable[[ str ], T]:
+	def _impl(x: str) -> T:
+		if x in options:
+			return elem_parser(x)
+		else:
+			raise ValueError()
+	return _impl
+
 def make_arg_def(original_type: type) -> ArgDef:
 	element_type = original_type
 	is_optional = getattr(element_type, '__origin__', None) == Union and getattr(element_type, '__args__')[1] == type(None)
@@ -38,6 +47,15 @@ def make_arg_def(original_type: type) -> ArgDef:
 
 	parser = _parser_overrides.get(element_type, element_type)
 
+	is_enum = getattr(element_type, '__origin__', None) == Literal
+	if is_enum:
+		enum_values = getattr(element_type, '__args__')
+		element_type = type(enum_values[0])
+		enum_values = set(enum_values)
+		parser = create_enum_parser(enum_values, _parser_overrides.get(element_type, element_type))
+	else:
+		enum_values = set()
+	
 	return ArgDef(
 		original_type = original_type,
 		element_type = element_type,
