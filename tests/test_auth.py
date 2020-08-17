@@ -60,3 +60,7 @@ def test_privileges(client: TestClient) -> None:
 def test_privileges_insufficient(client: TestClient) -> None:
 	res = client.get('/supersecret', headers = { 'Govyn-Token': '1234' })
 	assert res.status_code == 403
+
+def test_can_healthcheck_unauthed(client: TestClient) -> None:
+	res = client.get('/health/check')
+	assert res.status_code == 200

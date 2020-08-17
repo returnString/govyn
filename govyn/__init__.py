@@ -25,7 +25,9 @@ def create_app(
 	name = name or type(srv).__name__
 	cors_config = cors_config or permissive_cors_config()
 
-	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if not m.startswith('_') and m not in { 'startup', 'shutdown' } ]
+	http_methods = [ 'get', 'post' ]
+	method_prefixes = tuple([ m + '_' for m in http_methods ])
+	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if m in http_methods or m.startswith(method_prefixes) ]
 
 	openapi_schemas = build_schemas(route_defs, name, auth_backend)
 	swagger_ui = build_swagger_ui(name)
@@ -63,8 +65,15 @@ def create_app(
 		],
 	)
 
+	health_app = Starlette(
+		routes = [
+			Route('/check', lambda _: JSONResponse({}))
+		]
+	)
+
 	return Starlette(routes = [
 		Mount('/openapi', openapi_app),
+		Mount('/health', health_app),
 		Mount('/', core_app),
 	], on_startup = startup_funcs, on_shutdown = shutdown_funcs, middleware = [ cors_middleware_from_config(cors_config) ])
 
