@@ -14,12 +14,13 @@ A tiny framework for writing async HTTP APIs in typed Python.
 	- `/openapi/schema`: OpenAPI v3 schema as JSON
 	- `/openapi/swagger`: embedded [Swagger UI](https://swagger.io/tools/swagger-ui/) page for testing
 	- `/openapi/redoc`: embedded [Redoc](https://redoc.ly/redoc) documentation page
+- Prometheus metrics support
 
 # Example
 ```python
 from dataclasses import dataclass
 from typing import List
-from govyn import create_app, run_app
+from govyn import run
 
 @dataclass
 class AddRequest:
@@ -48,8 +49,7 @@ class CalculatorAPI:
 	async def post_add(self, req: AddRequest) -> Response:
 		return Response(sum(req.numbers))
 
-app = create_app(CalculatorAPI())
-run_app(app)
+run(CalculatorAPI())
 ```
 
 Try out the built-in Swagger UI on this [example Heroku deployment](https://govyn-demo.herokuapp.com/openapi/swagger), built from source available in the [govyn-demo](https://github.com/returnString/govyn-demo) repository!

@@ -3,7 +3,7 @@ from typing import Any, Generator, Optional, Callable
 import pytest
 from starlette.testclient import TestClient
 
-from govyn import create_app
+from govyn.app import create_app
 from govyn.auth import AuthBackend
 
 def make_client(srv: Callable[[], Any], auth_backend: Optional[AuthBackend] = None) -> Any:

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from typing import Optional, Literal
 
-from govyn import create_app, run_app
+from govyn import run
 from govyn.auth import Principal, HeaderAuthBackend
+from govyn.metrics import Counter
 
 MyEnum = Literal['test string', 'other supported value']
 
@@ -12,7 +13,11 @@ class GreetingResponse:
 	enum_values: MyEnum
 
 class TestUIServer:
+	async def startup(self) -> None:
+		self.greeting_counter = Counter('num_greetings')
+
 	async def get_greeting(self, principal: Principal) -> GreetingResponse:
+		self.greeting_counter.inc({ 'name': principal.id })
 		return GreetingResponse(f'hey there, {principal.id}', 'test string')
 
 class SuperInsecureAuthBackend(HeaderAuthBackend):
@@ -21,4 +26,4 @@ class SuperInsecureAuthBackend(HeaderAuthBackend):
 	async def principal_from_header(self, value: str) -> Optional[Principal]:
 		return Principal(value, set())
 
-run_app(create_app(TestUIServer(), auth_backend = SuperInsecureAuthBackend()))
+run(TestUIServer(), auth_backend = SuperInsecureAuthBackend())
