@@ -17,7 +17,10 @@ class TestUIServer:
 		self.greeting_counter = Counter('num_greetings')
 
 	async def get_greeting(self, principal: Principal) -> GreetingResponse:
-		self.greeting_counter.inc({ 'name': principal.id })
+		self.greeting_counter.inc(
+			name = principal.id,
+		)
+
 		return GreetingResponse(f'hey there, {principal.id}', 'test string')
 
 class SuperInsecureAuthBackend(HeaderAuthBackend):
