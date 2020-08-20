@@ -1,6 +1,7 @@
-from typing import Optional, Any, Dict, Union, Awaitable, Callable, Sequence
+from typing import Optional, Any, Dict, Union, Awaitable, Callable, Sequence, Iterator
 from dataclasses import dataclass
 from time import perf_counter
+from contextlib import contextmanager
 
 from starlette.types import ASGIApp
 from starlette.requests import Request
@@ -18,6 +19,13 @@ def _metrics_sync_init(svc: aioprometheus.Service, **labels: LabelValue) -> None
 	global _svc, _const_labels
 	_svc = svc
 	_const_labels = labels
+
+@dataclass
+class LabelUpdater:
+	_labels: Dict[str, LabelValue]
+
+	def update(self, **labels: LabelValue) -> None:
+		self._labels = { **self._labels, **labels }
 
 @dataclass
 class Counter:
@@ -44,19 +52,22 @@ class Histogram:
 	def observe(self, obs: Observation, **labels: LabelValue) -> None:
 		self.summary.observe(labels, obs)
 
+	@contextmanager
+	def observe_time(self, **labels: LabelValue) -> Iterator[LabelUpdater]:
+		start_time = perf_counter()
+		label_updater = LabelUpdater(labels)
+		yield label_updater
+		elapsed_secs = perf_counter() - start_time
+		self.observe(elapsed_secs, **label_updater._labels)
+
 class MetricsMiddleware(BaseHTTPMiddleware):
 	def __init__(self, app: ASGIApp) -> None:
 		super().__init__(app)
 		self.request_timing_histogram = Histogram('api_response_time_seconds')
 
 	async def dispatch(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
-		start_time = perf_counter()
-		res = await call_next(req)
-		elapsed_secs = perf_counter() - start_time
-		self.request_timing_histogram.observe(
-			elapsed_secs,
-			method = req.method,
-			path = req.url.path,
-			status = res.status_code,
-		)
+		with self.request_timing_histogram.observe_time(method = req.method, path = req.url.path) as labels:
+			res = await call_next(req)
+			labels.update(status = res.status_code)
+
 		return res
