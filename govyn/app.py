@@ -1,21 +1,19 @@
 from typing import Any, Optional, Dict, List
 
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse, HTMLResponse
+from starlette.responses import JSONResponse
 from starlette.routing import Route, Mount
 from starlette.middleware import Middleware
 from starlette.types import ASGIApp
 from aioprometheus import Service as PromService
 
 from .route_def import make_route_def
-from .schemas import build_schemas
-from .swagger import build_swagger_ui
-from .redoc import build_redoc_ui
 from .endpoint import make_endpoint
 from .errors import JSONErrorMiddleware
 from .auth import AuthBackend, AuthMiddleware
 from .security import CORSConfig, permissive_cors_config, cors_middleware_from_config
 from .metrics import MetricsMiddleware, _metrics_sync_init
+from .openapi import openapi_app
 
 def create_app(
 		srv: Any,
@@ -31,10 +29,6 @@ def create_app(
 	method_prefixes = tuple([ m + '_' for m in http_methods ])
 	route_defs = [ make_route_def(getattr(srv, m)) for m in dir(srv) if m in http_methods or m.startswith(method_prefixes) ]
 
-	openapi_schemas = build_schemas(route_defs, name, auth_backend)
-	swagger_ui = build_swagger_ui(name)
-	redoc_ui = build_redoc_ui(name)
-	
 	metrics_svc = PromService()
 	_metrics_sync_init(
 		metrics_svc,
@@ -69,14 +63,6 @@ def create_app(
 		middleware = middleware,
 	)
 
-	openapi_app = Starlette(
-		routes = [
-			Route('/schema', lambda _: JSONResponse(openapi_schemas)),
-			Route('/swagger', lambda _: HTMLResponse(swagger_ui)),
-			Route('/redoc', lambda _: HTMLResponse(redoc_ui)),
-		],
-	)
-
 	health_app = Starlette(
 		routes = [
 			Route('/check', lambda _: JSONResponse({}))
@@ -85,7 +71,7 @@ def create_app(
 
 	return Starlette(
 		routes = [
-			Mount('/openapi', openapi_app),
+			Mount('/openapi', openapi_app(name, route_defs, auth_backend)),
 			Mount('/health', health_app),
 			Mount('/', core_app),
 		],
