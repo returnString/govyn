@@ -36,7 +36,10 @@ def create_app(
 	redoc_ui = build_redoc_ui(name)
 	
 	metrics_svc = PromService()
-	_metrics_sync_init(metrics_svc)
+	_metrics_sync_init(
+		metrics_svc,
+		app = name,
+	)
 
 	async def metrics_async_init() -> None:
 		if metrics_port:
