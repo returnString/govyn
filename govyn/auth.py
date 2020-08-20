@@ -9,6 +9,7 @@ from starlette.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from .errors import Unauthorised, Forbidden
+from .metrics import Histogram
 
 @dataclass
 class Principal:
@@ -26,9 +27,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 	def __init__(self, app: ASGIApp, auth_backend: AuthBackend) -> None:
 		super().__init__(app)
 		self.auth_backend = auth_backend
+		self.principal_resolution_histogram = Histogram('api_auth_principal_resolution_seconds')
 
 	async def dispatch(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
-		principal = await self.auth_backend.resolve_principal(req)
+		with self.principal_resolution_histogram.observe_time():
+			principal = await self.auth_backend.resolve_principal(req)
+
 		if principal is None:
 			raise Unauthorised('authentication failed')
 
@@ -41,7 +45,7 @@ class HeaderAuthBackend(ABC):
 	async def resolve_principal(self, req: Request) -> Optional[Principal]:
 		token = req.headers.get(self.header)
 		if not token:
-			raise Unauthorised(f'missing header: {self.header}')
+			return None
 
 		return await self.principal_from_header(token)
 
