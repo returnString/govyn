@@ -9,7 +9,7 @@ def build_redoc_ui(title: str) -> str:
 		</style>
 	</head>
 	<body>
-		<redoc spec-url='/openapi/schema'></redoc>
+		<redoc spec-url='schema'></redoc>
 		<script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
 	</body>
 	</html>

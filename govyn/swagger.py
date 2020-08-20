@@ -1,7 +1,7 @@
 js = '''
 window.onload = function() {
 	const ui = SwaggerUIBundle({
-		url: "/openapi/schema",
+		url: "schema",
 		dom_id: '#swagger-ui',
 		deepLinking: true,
 		presets: [
