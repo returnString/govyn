@@ -1,5 +1,6 @@
 from typing import Any, Union, Dict, Callable, Literal, Set, TypeVar
 from dataclasses import dataclass
+from datetime import datetime
 
 from .errors import BadRequest
 from .auth import Principal
@@ -24,6 +25,7 @@ def _parse_bool(x: str) -> bool:
 
 _parser_overrides: Dict[type, _ParserType] = {
 	bool: _parse_bool,
+	datetime: datetime.fromisoformat,
 }
 
 T = TypeVar('T')

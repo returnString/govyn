@@ -1,6 +1,7 @@
 from typing import Optional, List, Union, Dict, Any, Literal
 from dataclasses import dataclass, asdict
 from enum import Enum
+from datetime import datetime
 
 import pytest
 from starlette.testclient import TestClient
@@ -30,6 +31,10 @@ StringEnum = Literal["type1", "type2", "type3"]
 class EnumTypes:
 	string_enum_field: StringEnum
 
+@dataclass
+class StdLibTypes:
+	datetime_field: datetime
+
 class EchoAPI:
 	async def get_scalars(self, str_field: str, int_field: int, float_field: float, bool_field: bool) -> ScalarTypes:
 		return ScalarTypes(str_field, int_field, float_field, bool_field)
@@ -53,6 +58,12 @@ class EchoAPI:
 		return EnumTypes(string_selection)
 
 	async def post_enums(self, body: EnumTypes) -> EnumTypes:
+		return body
+
+	async def get_stdlib_types(self, datetime_field: datetime) -> StdLibTypes:
+		return StdLibTypes(datetime_field)
+
+	async def post_stdlib_types(self, body: StdLibTypes) -> StdLibTypes:
 		return body
 
 client = make_client(EchoAPI)
@@ -165,4 +176,27 @@ def test_post_enum(client: TestClient) -> None:
 def test_post_enum_invalid(client: TestClient) -> None:
 	example_enums = asdict(EnumTypes('not an option')) # type: ignore
 	res = client.post('/enums', json = example_enums)
+	assert res.status_code == 400
+
+def test_get_stdlib_types(client: TestClient) -> None:
+	example = StdLibTypes(datetime.now())
+	res = client.get('/stdlib_types', params = { 'datetime_field': example.datetime_field.isoformat() })
+	assert res.status_code == 200
+	res_data = res.json()
+	res_data['datetime_field'] = datetime.fromisoformat(res_data['datetime_field'])
+	assert res_data == asdict(example)
+
+def test_post_stdlib_types(client: TestClient) -> None:
+	example = asdict(StdLibTypes(datetime.now()))
+	example['datetime_field'] = example['datetime_field'].isoformat()
+	res = client.post('/stdlib_types', json = example)
+	assert res.status_code == 200
+	assert res.json() == example
+
+def test_get_invalid_datetime(client: TestClient) -> None:
+	res = client.get('/stdlib_types', params = { 'datetime_field': 'not a date' })
+	assert res.status_code == 400
+
+def test_post_invalid_datetime(client: TestClient) -> None:
+	res = client.post('/stdlib_types', json = { 'datetime_field': 'not a date' })
 	assert res.status_code == 400

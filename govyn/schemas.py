@@ -2,6 +2,7 @@ from typing import Dict, Any, List, Union, Optional, Literal
 from dataclasses import is_dataclass, fields
 from collections import defaultdict
 from enum import Enum
+from datetime import datetime
 
 from .route_def import RouteDef
 from .auth import AuthBackend
@@ -12,6 +13,11 @@ _pytype_to_schema_type_lookup = {
 	float: 'number',
 	bool: 'boolean',
 	type(None): 'null',
+	datetime: 'string',
+}
+
+_pytype_string_formats: Dict[type, str] = {
+	datetime: 'date-time',
 }
 
 def pytype_to_schema(py_type: type) -> Dict[str, Any]:
@@ -48,9 +54,9 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 				'enum': generic_types,
 			}
 
-	schema_type = _pytype_to_schema_type_lookup[py_type]
 	return {
-		'type': schema_type,
+		'type': _pytype_to_schema_type_lookup[py_type],
+		'format': _pytype_string_formats.get(py_type),
 	}
 
 def build_schemas(route_defs: List[RouteDef], api_name: str, auth_backend: Optional[AuthBackend]) -> Dict[str, Any]:
