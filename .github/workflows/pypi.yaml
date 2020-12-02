@@ -23,7 +23,7 @@ jobs:
     - name: Get tag version from tag
       run: |
         version=${GITHUB_REF/refs\/tags\/v}
-        echo ::set-env name=VERSION::$version
+        echo "VERSION=$version" >> $GITHUB_ENV
         sed -i "s/version = '.*'/version = '$version'/" setup.py
     - name: Commit new version
       uses: stefanzweifel/git-auto-commit-action@v4
