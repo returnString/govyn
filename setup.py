@@ -21,7 +21,6 @@ setup(
 		'starlette >= 0.13',
 		'uvicorn >= 0.11',
 		'dacite >= 1.5.1',
-		'requests >= 2.24',
 		'aioprometheus[aiohttp] >= 20.0',
 	],
 	classifiers=[
