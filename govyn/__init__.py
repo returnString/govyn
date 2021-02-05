@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Dict, Optional, Any
 
 import uvicorn
 
@@ -14,6 +14,7 @@ def run(
 		port: int = 80,
 		metrics_port: int = 5000,
 		host: str = "0.0.0.0",
+		uvicorn_kwargs: Dict[str, Any] = {},
 	) -> None:
 	app = create_app(srv, name, auth_backend, cors_config, metrics_port)
-	uvicorn.run(app, host = host, port = port)
+	uvicorn.run(app, host = host, port = port, **uvicorn_kwargs)
