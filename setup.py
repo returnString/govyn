@@ -18,6 +18,7 @@ setup(
 	},
 	zip_safe = False,
 	install_requires = [
+		'chardet < 4.0.0',
 		'starlette >= 0.13',
 		'uvicorn >= 0.11',
 		'dacite >= 1.5.1',
