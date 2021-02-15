@@ -1,3 +1,4 @@
+import json
 from typing import Optional, List, Union, Dict, Any, Literal
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -89,6 +90,17 @@ def test_get_missing_field(client: TestClient, example_scalars: Dict[str, Any]) 
 def test_get_invalid_types(client: TestClient, example_scalars: Dict[str, Any]) -> None:
 	example_scalars['bool_field'] = 'not a bool'
 	res = client.get('/scalars', params = example_scalars)
+	assert res.status_code == 400
+
+def test_post_invalid_json(client: TestClient, example_scalars: Dict[str, Any]) -> None:
+	data = json.dumps(example_scalars)
+	# make the json invalid by removing the first brace
+	messed_up_data = data.replace('{', '', 1)
+	res = client.post(
+		"/scalars",
+		headers={'content-type': 'application/json'},
+		data=messed_up_data
+	)
 	assert res.status_code == 400
 
 def test_post(client: TestClient, example_scalars: Dict[str, Any]) -> None:
