@@ -53,7 +53,11 @@ async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str
 	return ret
 
 async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
-	json_body = await req.json()
+	try:
+		json_body = await req.json()
+	except json.JSONDecodeError:
+		raise BadRequest('Request body is not valid JSON')
+
 	name = list(args)[0]
 	arg_def = args[name]
 
