@@ -3,13 +3,14 @@ from dataclasses import dataclass
 from time import perf_counter
 from contextlib import contextmanager
 
+from aioprometheus.collectors import NumericValueType
 from starlette.types import ASGIApp
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 import aioprometheus
 
-Observation = Union[float, int] 
+Observation = Union[float, int]
 LabelValue = Union[str, int]
 
 _svc: aioprometheus.Service
@@ -38,6 +39,24 @@ class Counter:
 
 	def inc(self, **labels: LabelValue) -> None:
 		self.counter.inc(labels)
+
+	def add(self, val: int, **labels: LabelValue) -> None:
+		self.counter.add(labels, val)
+
+@dataclass
+class Gauge:
+	name: str
+	description: str = ''
+
+	def __post_init__(self) -> None:
+		self.gauge = aioprometheus.Gauge(self.name, self.description, _const_labels)
+		_svc.register(self.gauge)
+
+	def set(self, val: NumericValueType, **labels: LabelValue) -> None:
+		self.gauge.set(labels, val)
+
+	def inc(self, **labels: LabelValue) -> None:
+		self.gauge.inc(labels)
 
 @dataclass
 class Histogram:
