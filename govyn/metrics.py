@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from time import perf_counter
 from contextlib import contextmanager
 
+from aioprometheus.collectors import NumericValueType
 from starlette.types import ASGIApp
 from starlette.requests import Request
 from starlette.responses import Response
@@ -49,7 +50,7 @@ class Gauge:
 
 	def __post_init__(self) -> None:
 		self.gauge = aioprometheus.Gauge(self.name, self.description, _const_labels)
-		metrics._svc.register(self.gauge)
+		_svc.register(self.gauge)
 
 	def set(self, val: NumericValueType, **labels: LabelValue) -> None:
 		self.gauge.set(labels, val)
