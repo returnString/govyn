@@ -18,10 +18,9 @@ setup(
 	},
 	zip_safe = False,
 	install_requires = [
-		'starlette >= 0.13',
+		'starlette >= 0.14',
 		'uvicorn >= 0.11',
 		'dacite >= 1.5.1',
-		'requests >= 2.23',
 		'aioprometheus[aiohttp] >= 20.0',
 		'aiohttp >= 3.7',
 	],
