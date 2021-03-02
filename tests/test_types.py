@@ -6,6 +6,7 @@ from datetime import datetime
 
 import pytest
 from starlette.testclient import TestClient
+from dacite.core import from_dict
 
 from .helpers import make_client
 
@@ -36,6 +37,19 @@ class EnumTypes:
 class StdLibTypes:
 	datetime_field: datetime
 
+
+@dataclass
+class UnionEntryStrField:
+	field1: str
+
+@dataclass
+class UnionEntryIntField:
+	field2: int
+
+@dataclass
+class UnionOfDataClasses:
+	union_param: Union[UnionEntryStrField, UnionEntryIntField]
+
 class EchoAPI:
 	async def get_scalars(self, str_field: str, int_field: int, float_field: float, bool_field: bool) -> ScalarTypes:
 		return ScalarTypes(str_field, int_field, float_field, bool_field)
@@ -65,6 +79,9 @@ class EchoAPI:
 		return StdLibTypes(datetime_field)
 
 	async def post_stdlib_types(self, body: StdLibTypes) -> StdLibTypes:
+		return body
+
+	async def post_union_dataclass_param(self, body: UnionOfDataClasses) -> UnionOfDataClasses:
 		return body
 
 client = make_client(EchoAPI)
@@ -212,3 +229,16 @@ def test_get_invalid_datetime(client: TestClient) -> None:
 def test_post_invalid_datetime(client: TestClient) -> None:
 	res = client.post('/stdlib_types', json = { 'datetime_field': 'not a date' })
 	assert res.status_code == 400
+
+def test_post_dataclass_union(client: TestClient) -> None:
+	example_str = UnionOfDataClasses(UnionEntryStrField('test'))
+	res = client.post('/union_dataclass_param', json = asdict(example_str))
+	assert res.status_code == 200
+	res_data = from_dict(UnionOfDataClasses, res.json()) 
+	assert res_data == example_str
+
+	example_int = UnionOfDataClasses(UnionEntryIntField(1))
+	res = client.post('/union_dataclass_param', json = asdict(example_int))
+	assert res.status_code == 200
+	res_data = from_dict(UnionOfDataClasses, res.json()) 
+	assert res_data == example_int
