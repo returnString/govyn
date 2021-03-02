@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from time import perf_counter
 from contextlib import contextmanager
 
-from aioprometheus.collectors import NumericValueType
 from starlette.types import ASGIApp
 from starlette.requests import Request
 from starlette.responses import Response
@@ -29,10 +28,12 @@ class LabelUpdater:
 		self._labels = { **self._labels, **labels }
 
 @dataclass
-class Counter:
+class MetricBase:
 	name: str
 	description: str = ''
 
+@dataclass
+class Counter(MetricBase):
 	def __post_init__(self) -> None:
 		self.counter = aioprometheus.Counter(self.name, self.description, _const_labels)
 		_svc.register(self.counter)
@@ -44,24 +45,19 @@ class Counter:
 		self.counter.add(labels, val)
 
 @dataclass
-class Gauge:
-	name: str
-	description: str = ''
-
+class Gauge(MetricBase):
 	def __post_init__(self) -> None:
 		self.gauge = aioprometheus.Gauge(self.name, self.description, _const_labels)
 		_svc.register(self.gauge)
 
-	def set(self, val: NumericValueType, **labels: LabelValue) -> None:
+	def set(self, val: Observation, **labels: LabelValue) -> None:
 		self.gauge.set(labels, val)
 
 	def inc(self, **labels: LabelValue) -> None:
 		self.gauge.inc(labels)
 
 @dataclass
-class Histogram:
-	name: str
-	description: str = ''
+class Histogram(MetricBase):
 	buckets: Sequence[float] = aioprometheus.Histogram.DEFAULT_BUCKETS
 
 	def __post_init__(self) -> None:
