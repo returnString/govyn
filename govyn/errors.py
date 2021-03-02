@@ -26,8 +26,20 @@ class Forbidden(HTTPError):
 	code = 403
 
 @dataclass
+class NotFound(HTTPError):
+	code = 404
+
+@dataclass
 class Conflict(HTTPError):
 	code = 409
+
+@dataclass
+class TooManyRequests(HTTPError):
+	code = 429
+
+@dataclass
+class InternalServerError(HTTPError):
+	code = 500
 
 def error_response(code: int, desc: Optional[str], data: Optional[Any]) -> JSONResponse:
 	return JSONResponse({
