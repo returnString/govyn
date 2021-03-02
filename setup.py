@@ -18,12 +18,12 @@ setup(
 	},
 	zip_safe = False,
 	install_requires = [
-		'chardet < 4.0.0',
 		'starlette >= 0.13',
 		'uvicorn >= 0.11',
 		'dacite >= 1.5.1',
 		'requests >= 2.23',
 		'aioprometheus[aiohttp] >= 20.0',
+		'aiohttp >= 3.7',
 	],
 	classifiers=[
 		'Programming Language :: Python :: 3',
