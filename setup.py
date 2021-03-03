@@ -19,12 +19,11 @@ setup(
 	zip_safe = False,
 	install_requires = [
 		'starlette >= 0.14',
-		'uvicorn >= 0.11',
+		'uvicorn >= 0.13',
 		'dacite >= 1.5.1',
 		'aioprometheus[aiohttp] >= 20.0',
 		# not explicit dependencies, but required to avoid build breaks
 		'aiohttp >= 3.7',
-		'httptools >= 0.1',
 	],
 	classifiers=[
 		'Programming Language :: Python :: 3',
