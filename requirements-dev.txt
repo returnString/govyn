@@ -1,4 +1,4 @@
 mypy==0.812
 pytest==6.2.2
 pytest-cov==2.11.1
-requests==2.23
+requests==2.25.1
