@@ -22,7 +22,9 @@ setup(
 		'uvicorn >= 0.11',
 		'dacite >= 1.5.1',
 		'aioprometheus[aiohttp] >= 20.0',
+		# not explicit dependencies, but required to avoid build breaks
 		'aiohttp >= 3.7',
+		'httptools >= 0.1',
 	],
 	classifiers=[
 		'Programming Language :: Python :: 3',
