@@ -74,6 +74,8 @@ class RouteDef:
 	args: Dict[str, ArgDef]
 	return_type: type
 	requires_principal: bool
+	readable_name: str
+	doc: str
 
 def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 	name_tokens = impl.__name__.split('_')
@@ -102,4 +104,6 @@ def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 		args = args,
 		return_type = return_type,
 		requires_principal = requires_principal,
+		readable_name = ' '.join([ s.title() for s in name_tokens[1:] ]),
+		doc = getattr(impl, '__doc__'),
 	)

@@ -63,7 +63,8 @@ def build_schemas(route_defs: List[RouteDef], api_name: str, auth_backend: Optio
 	paths: Dict[str, Any] = defaultdict(dict)
 	for route_def in route_defs:
 		spec: Any = {
-			'summary': getattr(route_def.impl, '__doc__') or route_def.impl.__name__,
+			'summary': route_def.readable_name,
+			'description': route_def.doc,
 			'responses': {
 				'200': {
 					'description': 'success',

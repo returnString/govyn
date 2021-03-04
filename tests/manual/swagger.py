@@ -17,6 +17,8 @@ class TestUIServer:
 		self.greeting_counter = Counter('num_greetings')
 
 	async def get_greeting(self, principal: Principal) -> GreetingResponse:
+		'''Longer description of getting a greeting.'''
+
 		self.greeting_counter.inc(
 			name = principal.id,
 		)
