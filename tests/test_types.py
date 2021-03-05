@@ -2,7 +2,7 @@ import json
 from typing import Optional, List, Union, Dict, Any, Literal
 from dataclasses import dataclass, asdict
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 
 import pytest
 from starlette.testclient import TestClient
@@ -36,6 +36,7 @@ class EnumTypes:
 @dataclass
 class StdLibTypes:
 	datetime_field: datetime
+	date_field: date
 
 
 @dataclass
@@ -75,8 +76,8 @@ class EchoAPI:
 	async def post_enums(self, body: EnumTypes) -> EnumTypes:
 		return body
 
-	async def get_stdlib_types(self, datetime_field: datetime) -> StdLibTypes:
-		return StdLibTypes(datetime_field)
+	async def get_stdlib_types(self, datetime_field: datetime, date_field: date) -> StdLibTypes:
+		return StdLibTypes(datetime_field, date_field)
 
 	async def post_stdlib_types(self, body: StdLibTypes) -> StdLibTypes:
 		return body
@@ -208,16 +209,18 @@ def test_post_enum_invalid(client: TestClient) -> None:
 	assert res.status_code == 400
 
 def test_get_stdlib_types(client: TestClient) -> None:
-	example = StdLibTypes(datetime.now())
-	res = client.get('/stdlib_types', params = { 'datetime_field': example.datetime_field.isoformat() })
+	example = StdLibTypes(datetime.now(), date.today())
+	res = client.get('/stdlib_types', params = { 'datetime_field': example.datetime_field.isoformat(), 'date_field': example.date_field.isoformat() })
 	assert res.status_code == 200
 	res_data = res.json()
 	res_data['datetime_field'] = datetime.fromisoformat(res_data['datetime_field'])
+	res_data['date_field'] = date.fromisoformat(res_data['date_field'])
 	assert res_data == asdict(example)
 
 def test_post_stdlib_types(client: TestClient) -> None:
-	example = asdict(StdLibTypes(datetime.now()))
+	example = asdict(StdLibTypes(datetime.now(), date.today()))
 	example['datetime_field'] = example['datetime_field'].isoformat()
+	example['date_field'] = example['date_field'].isoformat()
 	res = client.post('/stdlib_types', json = example)
 	assert res.status_code == 200
 	assert res.json() == example

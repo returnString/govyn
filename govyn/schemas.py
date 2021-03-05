@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Union, Optional, Literal
 from dataclasses import is_dataclass, fields
 from collections import defaultdict
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 
 from .route_def import RouteDef
 from .auth import AuthBackend
@@ -14,10 +14,12 @@ _pytype_to_schema_type_lookup = {
 	bool: 'boolean',
 	type(None): 'null',
 	datetime: 'string',
+	date: 'string,'
 }
 
-_pytype_string_formats: Dict[type, str] = {
+_pytype_string_formats = {
 	datetime: 'date-time',
+	date: 'date',
 }
 
 def pytype_to_schema(py_type: type) -> Dict[str, Any]:

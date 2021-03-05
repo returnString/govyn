@@ -1,7 +1,7 @@
 from typing import Dict, Any, Callable, Awaitable
 from dataclasses import asdict, is_dataclass
 import json
-from datetime import datetime
+from datetime import datetime, date
 
 from starlette.requests import Request
 from starlette.responses import Response
@@ -13,7 +13,7 @@ from .route_def import RouteDef, ArgDef
 from .errors import BadRequest
 
 def default_json_ser(obj: Any) -> Any:
-	if isinstance(obj, datetime):
+	if isinstance(obj, (datetime, date)):
 		return obj.isoformat()
 
 	raise TypeError(f'type {type(obj)} is not serializable')
@@ -64,6 +64,7 @@ async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, A
 	try:
 		body: Any = from_dict(arg_def.element_type, json_body, Config(type_hooks = {
 			datetime: datetime.fromisoformat,
+			date: date.fromisoformat,
 		}))
 	except (DaciteError, ValueError) as e:
 		raise BadRequest(str(e))
