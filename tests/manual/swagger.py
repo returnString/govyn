@@ -3,7 +3,7 @@ from typing import Optional, Literal
 
 from govyn import run
 from govyn.auth import Principal, HeaderAuthBackend
-from govyn.metrics import Counter
+from govyn.metrics import Counter, MetricsRegistry
 
 MyEnum = Literal['test string', 'other supported value']
 
@@ -13,8 +13,11 @@ class GreetingResponse:
 	enum_values: MyEnum
 
 class TestUIServer:
+	def __init__(self) -> None:
+		self.metrics = MetricsRegistry()
+
 	async def startup(self) -> None:
-		self.greeting_counter = Counter('num_greetings')
+		self.greeting_counter = self.metrics.counter('num_greetings')
 
 	async def get_greeting(self, principal: Principal) -> GreetingResponse:
 		'''Longer description of getting a greeting.'''

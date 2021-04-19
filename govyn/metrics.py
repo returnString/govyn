@@ -12,14 +12,6 @@ import aioprometheus
 Observation = Union[float, int]
 LabelValue = Union[str, int]
 
-_svc: aioprometheus.Service
-_const_labels: Dict[str, LabelValue]
-
-def _metrics_sync_init(svc: aioprometheus.Service, **labels: LabelValue) -> None:
-	global _svc, _const_labels
-	_svc = svc
-	_const_labels = labels
-
 @dataclass
 class LabelUpdater:
 	_labels: Dict[str, LabelValue]
@@ -28,44 +20,31 @@ class LabelUpdater:
 		self._labels = { **self._labels, **labels }
 
 @dataclass
-class MetricBase:
-	name: str
-	description: str = ''
-
-@dataclass
-class Counter(MetricBase):
-	def __post_init__(self) -> None:
-		self.counter = aioprometheus.Counter(self.name, self.description, _const_labels)
-		_svc.register(self.counter)
+class Counter:
+	_counter: aioprometheus.Counter
 
 	def inc(self, **labels: LabelValue) -> None:
-		self.counter.inc(labels)
+		self._counter.inc(labels)
 
 	def add(self, val: int, **labels: LabelValue) -> None:
-		self.counter.add(labels, val)
+		self._counter.add(labels, val)
 
 @dataclass
-class Gauge(MetricBase):
-	def __post_init__(self) -> None:
-		self.gauge = aioprometheus.Gauge(self.name, self.description, _const_labels)
-		_svc.register(self.gauge)
+class Gauge:
+	_gauge: aioprometheus.Gauge
 
 	def set(self, val: Observation, **labels: LabelValue) -> None:
-		self.gauge.set(labels, val)
+		self._gauge.set(labels, val)
 
 	def inc(self, **labels: LabelValue) -> None:
-		self.gauge.inc(labels)
+		self._gauge.inc(labels)
 
 @dataclass
-class Histogram(MetricBase):
-	buckets: Sequence[float] = aioprometheus.Histogram.DEFAULT_BUCKETS
-
-	def __post_init__(self) -> None:
-		self.summary = aioprometheus.Histogram(self.name, self.description, _const_labels, buckets = self.buckets)
-		_svc.register(self.summary)
+class Histogram:
+	_histogram: aioprometheus.Histogram
 
 	def observe(self, obs: Observation, **labels: LabelValue) -> None:
-		self.summary.observe(labels, obs)
+		self._histogram.observe(labels, obs)
 
 	@contextmanager
 	def observe_time(self, **labels: LabelValue) -> Iterator[LabelUpdater]:
@@ -75,10 +54,33 @@ class Histogram(MetricBase):
 		elapsed_secs = perf_counter() - start_time
 		self.observe(elapsed_secs, **label_updater._labels)
 
+class MetricsRegistry:
+	def __init__(self) -> None:
+		self._prom_svc = aioprometheus.Service()
+		self._const_labels: Dict[str, LabelValue] = {}
+	
+	def counter(self, name: str, desc: str = '') -> Counter:
+		counter = aioprometheus.Counter(name, desc, self._const_labels)
+		ret = Counter(counter)
+		self._prom_svc.register(counter)
+		return ret
+
+	def histogram(self, name: str, desc: str = '', buckets: Sequence[float] = aioprometheus.Histogram.DEFAULT_BUCKETS) -> Histogram:
+		histogram = aioprometheus.Histogram(name, desc, self._const_labels, buckets = buckets)
+		ret = Histogram(histogram)
+		self._prom_svc.register(histogram)
+		return ret
+
+	def gauge(self, name: str, desc: str = '') -> Gauge:
+		gauge = aioprometheus.Gauge(name, desc, self._const_labels)
+		ret = Gauge(gauge)
+		self._prom_svc.register(gauge)
+		return ret
+
 class MetricsMiddleware(BaseHTTPMiddleware):
-	def __init__(self, app: ASGIApp) -> None:
+	def __init__(self, app: ASGIApp, metrics_registry: MetricsRegistry) -> None:
 		super().__init__(app)
-		self.request_timing_histogram = Histogram('api_response_time_seconds')
+		self.request_timing_histogram = metrics_registry.histogram('api_response_time_seconds')
 
 	async def dispatch(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
 		with self.request_timing_histogram.observe_time(method = req.method, path = req.url.path) as labels:

@@ -9,7 +9,7 @@ from starlette.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from .errors import Unauthorised, Forbidden
-from .metrics import Histogram
+from .metrics import Histogram, MetricsRegistry
 
 @dataclass
 class Principal:
@@ -24,10 +24,10 @@ class AuthBackend(Protocol):
 		...
 
 class AuthMiddleware(BaseHTTPMiddleware):
-	def __init__(self, app: ASGIApp, auth_backend: AuthBackend) -> None:
+	def __init__(self, app: ASGIApp, auth_backend: AuthBackend, metrics_registry: MetricsRegistry) -> None:
 		super().__init__(app)
 		self.auth_backend = auth_backend
-		self.principal_resolution_histogram = Histogram('api_auth_principal_resolution_seconds')
+		self.principal_resolution_histogram = metrics_registry.histogram('api_auth_principal_resolution_seconds')
 
 	async def dispatch(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
 		with self.principal_resolution_histogram.observe_time():
