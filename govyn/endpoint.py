@@ -33,7 +33,7 @@ class GovynJSONResponse(Response):
 
 def parse_value(arg: ArgDef, var_name: str, str_value: str) -> Any:
 	try:
-		return arg.parser(str_value) # type: ignore
+		return arg.parser(str_value)
 	except ValueError as e:
 		raise BadRequest(f'invalid value for field {var_name} of type {arg.element_type.__name__}: {str(e)}')
 
