@@ -9,7 +9,7 @@ from starlette.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from .errors import Unauthorised, Forbidden
-from .metrics import Histogram, MetricsRegistry
+from .metrics import MetricsRegistry
 
 @dataclass
 class Principal:
@@ -34,7 +34,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 			principal = await self.auth_backend.resolve_principal(req)
 
 		if principal is None:
-			raise Unauthorised('authentication failed')
+			return Unauthorised('authentication failed').as_response()
 
 		req.state.principal = principal
 		return await call_next(req)

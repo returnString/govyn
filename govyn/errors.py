@@ -1,4 +1,4 @@
-from typing import Any, Optional, ClassVar, Callable, Awaitable
+from typing import Any, Optional, ClassVar
 from dataclasses import dataclass
 from http import HTTPStatus
 import traceback
@@ -6,12 +6,19 @@ import traceback
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.exceptions import HTTPException
 
 @dataclass
-class HTTPError(Exception):
+class HTTPError(HTTPException):
 	desc: str
 	data: Optional[Any] = None
 	code: ClassVar[int]
+
+	def __post_init__(self) -> None:
+		super().__init__(self.code, self.desc)
+
+	def as_response(self) -> JSONResponse:
+		return error_response(self.code, self.desc, self.data)
 
 @dataclass
 class BadRequest(HTTPError):
@@ -55,7 +62,7 @@ class JSONErrorMiddleware(BaseHTTPMiddleware):
 			response = await call_next(request)
 			return response
 		except HTTPError as e:
-			return error_response(e.code, e.desc, e.data)
+			return e.as_response()
 		except Exception as e:
 			traceback.print_exc()
 			return error_response(500, None, None)
