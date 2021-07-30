@@ -1,16 +1,18 @@
-from typing import Dict, Any, Callable, Awaitable
-from dataclasses import asdict, is_dataclass
 import json
-from datetime import datetime, date
+from dataclasses import asdict, is_dataclass
+from datetime import date, datetime
+from enum import Enum, EnumMeta
+from typing import Any, Awaitable, Callable, Dict
 
+from dacite.config import Config
+from dacite.core import from_dict
+from dacite.exceptions import DaciteError
 from starlette.requests import Request
 from starlette.responses import Response
-from dacite.core import from_dict
-from dacite.config import Config
-from dacite.exceptions import DaciteError
 
-from .route_def import RouteDef, ArgDef
 from .errors import BadRequest
+from .route_def import ArgDef, RouteDef
+
 
 def default_json_ser(obj: Any) -> Any:
 	if isinstance(obj, (datetime, date)):
@@ -35,7 +37,10 @@ def parse_value(arg: ArgDef, var_name: str, str_value: str) -> Any:
 	try:
 		return arg.parser(str_value)
 	except ValueError as e:
-		raise BadRequest(f'invalid value for field {var_name} of type {arg.element_type.__name__}: {str(e)}')
+		base_err = f'invalid value for field {var_name} of type {arg.element_type.__name__}:'
+		if isinstance(arg.element_type, EnumMeta):
+			raise BadRequest(f'{base_err} Must be one of {[e.value for e in arg.element_type]}')
+		raise BadRequest(f'{base_err}: {str(e)}')
 
 async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
 	ret: Dict[str, Any] = dict()
@@ -60,12 +65,11 @@ async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, A
 
 	name = list(args)[0]
 	arg_def = args[name]
-
 	try:
 		body: Any = from_dict(arg_def.element_type, json_body, Config(type_hooks = {
 			datetime: datetime.fromisoformat,
-			date: date.fromisoformat,
-		}))
+			date: date.fromisoformat
+		}, cast=[Enum]))
 	except (DaciteError, ValueError) as e:
 		raise BadRequest(str(e))
 

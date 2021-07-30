@@ -1,11 +1,11 @@
-from typing import Dict, Any, List, Union, Optional, Literal
-from dataclasses import is_dataclass, fields
 from collections import defaultdict
-from enum import Enum
-from datetime import datetime, date
+from dataclasses import fields, is_dataclass
+from datetime import date, datetime
+from enum import Enum, EnumMeta
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from .route_def import RouteDef
 from .auth import AuthBackend
+from .route_def import RouteDef
 
 _pytype_to_schema_type_lookup = {
 	int: 'integer',
@@ -14,7 +14,7 @@ _pytype_to_schema_type_lookup = {
 	bool: 'boolean',
 	type(None): 'null',
 	datetime: 'string',
-	date: 'string,'
+	date: 'string'
 }
 
 _pytype_string_formats = {
@@ -31,6 +31,11 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 			return {
 				'type': 'object',
 				'properties': { f.name: pytype_to_schema(f.type) for f in fields(py_type) },
+			}
+		elif isinstance(py_type, EnumMeta):
+			return {
+				'type': 'string',
+				'enum': list(e.value for e in py_type) # type: ignore
 			}
 	else:
 		if origin_type == list:

@@ -1,14 +1,15 @@
 import json
-from typing import Optional, List, Union, Dict, Any, Literal
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from datetime import date, datetime
 from enum import Enum
-from datetime import datetime, date
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import pytest
-from starlette.testclient import TestClient
 from dacite.core import from_dict
+from starlette.testclient import TestClient
 
 from .helpers import make_client
+
 
 @dataclass
 class ScalarTypes:
@@ -28,10 +29,18 @@ class OptionalTypes:
 	maybe_str_field: Optional[str]
 
 StringEnum = Literal["type1", "type2", "type3"]
+class ActualEnum(Enum):
+	a="A"
+	b="B"
 
 @dataclass
 class EnumTypes:
 	string_enum_field: StringEnum
+
+@dataclass
+class ActualEnumTypes:
+	actual_enum_field: ActualEnum
+	some_other_value: str = 'hello'
 
 @dataclass
 class StdLibTypes:
@@ -75,6 +84,12 @@ class EchoAPI:
 
 	async def post_enums(self, body: EnumTypes) -> EnumTypes:
 		return body
+
+	async def get_actual_enums(self, e: ActualEnum) -> str:
+		return e.value
+
+	async def post_actual_enums(self, body: ActualEnumTypes) -> str:
+		return body.actual_enum_field.value
 
 	async def get_stdlib_types(self, datetime_field: datetime, date_field: date) -> StdLibTypes:
 		return StdLibTypes(datetime_field, date_field)
@@ -208,6 +223,37 @@ def test_post_enum_invalid(client: TestClient) -> None:
 	res = client.post('/enums', json = example_enums)
 	assert res.status_code == 400
 
+def test_get_actual_enum(client: TestClient) -> None:
+	example_enum_value = 'A'
+	res = client.get('/actual_enums', params = {'e': example_enum_value})
+	assert res.status_code == 200
+	assert res.json() == example_enum_value
+
+def test_get_actual_enum_invalid_option(client: TestClient) -> None:
+	invalid_options = ('a', 'C')
+	for opt in invalid_options:
+		res = client.get('/actual_enums', params = {'e': opt})
+		assert res.status_code == 400
+		assert res.text.endswith("Must be one of ['A', 'B']")
+
+def test_post_actual_enum(client: TestClient) -> None:
+	example_enum_request = {
+		'actual_enum_field': 'A'
+	}
+	res = client.post('/actual_enums', json = example_enum_request)
+	assert res.status_code == 200
+	assert res.json() == 'A'
+
+def test_post_actual_enum_invalid_option(client: TestClient) -> None:
+	invalid_options = ('a', 'C')
+	for opt in invalid_options:
+		example_enum_request = {
+			'actual_enum_field': opt
+		}
+		res = client.post('/actual_enums', json = example_enum_request)
+		assert res.status_code == 400
+		assert res.text == f"'{opt}' is not a valid ActualEnum"
+
 def test_get_stdlib_types(client: TestClient) -> None:
 	example = StdLibTypes(datetime.now(), date.today())
 	res = client.get('/stdlib_types', params = { 'datetime_field': example.datetime_field.isoformat(), 'date_field': example.date_field.isoformat() })
@@ -237,11 +283,11 @@ def test_post_dataclass_union(client: TestClient) -> None:
 	example_str = UnionOfDataClasses(UnionEntryStrField('test'))
 	res = client.post('/union_dataclass_param', json = asdict(example_str))
 	assert res.status_code == 200
-	res_data = from_dict(UnionOfDataClasses, res.json()) 
+	res_data = from_dict(UnionOfDataClasses, res.json())
 	assert res_data == example_str
 
 	example_int = UnionOfDataClasses(UnionEntryIntField(1))
 	res = client.post('/union_dataclass_param', json = asdict(example_int))
 	assert res.status_code == 200
-	res_data = from_dict(UnionOfDataClasses, res.json()) 
+	res_data = from_dict(UnionOfDataClasses, res.json())
 	assert res_data == example_int
