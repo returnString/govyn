@@ -39,7 +39,7 @@ def parse_value(arg: ArgDef, var_name: str, str_value: str) -> Any:
 	except ValueError as e:
 		base_err = f'invalid value for field {var_name} of type {arg.element_type.__name__}:'
 		if isinstance(arg.element_type, EnumMeta):
-			raise BadRequest(f'{base_err} Must be one of {[e.value for e in arg.element_type]}')
+			raise BadRequest(f'{base_err} Must be one of {[e.value for e in arg.element_type]}') # type: ignore
 		raise BadRequest(f'{base_err}: {str(e)}')
 
 async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
