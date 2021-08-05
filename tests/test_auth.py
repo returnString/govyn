@@ -1,12 +1,11 @@
+from dataclasses import asdict, dataclass
 from typing import Optional
-from dataclasses import dataclass, asdict
 
-import pytest
+from govyn.auth import HeaderAuthBackend, Principal, privileged
 from starlette.testclient import TestClient
 
-from govyn.auth import Principal, HeaderAuthBackend, privileged
-
 from .helpers import make_client
+
 
 class HardcodedAuthBackend(HeaderAuthBackend):
 	header = "Govyn-Token"
@@ -39,7 +38,7 @@ def test_token(client: TestClient) -> None:
 	res = client.get('/', headers = { 'Govyn-Token': '1234' })
 	assert res.status_code == 200
 	assert res.json() == asdict(AuthedResponse('user1'))
-	
+
 	res = client.get('/', headers = { 'Govyn-Token': '5678' })
 	assert res.status_code == 200
 	assert res.json() == asdict(AuthedResponse('user2'))

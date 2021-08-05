@@ -85,11 +85,11 @@ class EchoAPI:
 	async def post_enums(self, body: EnumTypes) -> EnumTypes:
 		return body
 
-	async def get_actual_enums(self, e: ActualEnum) -> str:
-		return e.value
+	async def get_actual_enums(self, e: ActualEnum) -> ActualEnum:
+		return e
 
-	async def post_actual_enums(self, body: ActualEnumTypes) -> str:
-		return body.actual_enum_field.value
+	async def post_actual_enums(self, body: ActualEnumTypes) -> ActualEnumTypes:
+		return body
 
 	async def get_stdlib_types(self, datetime_field: datetime, date_field: date) -> StdLibTypes:
 		return StdLibTypes(datetime_field, date_field)
@@ -242,7 +242,10 @@ def test_post_actual_enum(client: TestClient) -> None:
 	}
 	res = client.post('/actual_enums', json = example_enum_request)
 	assert res.status_code == 200
-	assert res.json() == 'A'
+	assert res.json() == {
+		'actual_enum_field': 'A',
+		'some_other_value': 'hello'
+	}
 
 def test_post_actual_enum_invalid_option(client: TestClient) -> None:
 	invalid_options = ('a', 'C')

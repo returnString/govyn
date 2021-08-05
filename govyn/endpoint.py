@@ -17,6 +17,8 @@ from .route_def import ArgDef, RouteDef
 def default_json_ser(obj: Any) -> Any:
 	if isinstance(obj, (datetime, date)):
 		return obj.isoformat()
+	if isinstance(obj, Enum):
+		return obj.value
 
 	raise TypeError(f'type {type(obj)} is not serializable')
 
