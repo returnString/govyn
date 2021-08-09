@@ -234,7 +234,7 @@ def test_get_actual_enum_invalid_option(client: TestClient) -> None:
 	for opt in invalid_options:
 		res = client.get('/actual_enums', params = {'e': opt})
 		assert res.status_code == 400
-		assert res.text.endswith("Must be one of ['A', 'B']")
+		assert res.json()['error_description'].endswith("Must be one of ['A', 'B']")
 
 def test_post_actual_enum(client: TestClient) -> None:
 	example_enum_request = {
@@ -255,7 +255,7 @@ def test_post_actual_enum_invalid_option(client: TestClient) -> None:
 		}
 		res = client.post('/actual_enums', json = example_enum_request)
 		assert res.status_code == 400
-		assert res.text == f"'{opt}' is not a valid ActualEnum"
+		assert res.json()['error_description'] == f"'{opt}' is not a valid ActualEnum"
 
 def test_get_stdlib_types(client: TestClient) -> None:
 	example = StdLibTypes(datetime.now(), date.today())
