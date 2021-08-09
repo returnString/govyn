@@ -62,6 +62,8 @@ class JSONErrorMiddleware(BaseHTTPMiddleware):
 		try:
 			response = await call_next(request)
 			return response
+		except HTTPError as ex:
+			return ex.as_response()
 		except Exception:
 			print("Internal Error")
 			traceback.print_exc()
