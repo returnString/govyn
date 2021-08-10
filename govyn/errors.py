@@ -1,12 +1,14 @@
-from typing import Any, Optional, ClassVar
+import traceback
 from dataclasses import dataclass
 from http import HTTPStatus
-import traceback
+from typing import Any, ClassVar, Optional
 
-from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.exceptions import HTTPException
+from starlette.middleware.base import (BaseHTTPMiddleware,
+                                       RequestResponseEndpoint)
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+
 
 @dataclass
 class HTTPError(HTTPException):
@@ -57,12 +59,17 @@ def error_response(code: int, desc: Optional[str], data: Optional[Any]) -> JSONR
 
 class JSONErrorMiddleware(BaseHTTPMiddleware):
 	async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-		# TODO: logging
 		try:
 			response = await call_next(request)
 			return response
-		except HTTPError as e:
-			return e.as_response()
-		except Exception as e:
+		except Exception as ex:
+			print("Internal Error")
 			traceback.print_exc()
 			return error_response(500, None, None)
+
+def http_error_handler(request: Request, exc: HTTPError) -> JSONResponse:
+	'''
+	Handler function for HTTPError type exceptions. To be passed into the
+	starlette app as an exception handler to jsonify HTTPErrors
+	'''
+	return exc.as_response()

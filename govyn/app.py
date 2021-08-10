@@ -1,18 +1,20 @@
-from typing import Any, Optional, Dict, List, Protocol
+from typing import Any, Optional
 
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse
-from starlette.routing import Route, Mount
 from starlette.middleware import Middleware
+from starlette.responses import JSONResponse
+from starlette.routing import Mount, Route
 from starlette.types import ASGIApp
 
-from .route_def import make_route_def
-from .endpoint import make_endpoint
-from .errors import JSONErrorMiddleware
 from .auth import AuthBackend, AuthMiddleware
-from .security import CORSConfig, permissive_cors_config, cors_middleware_from_config
+from .endpoint import make_endpoint
+from .errors import HTTPError, JSONErrorMiddleware, http_error_handler
 from .metrics import MetricsMiddleware, MetricsRegistry
 from .openapi import openapi_app
+from .route_def import make_route_def
+from .security import (CORSConfig, cors_middleware_from_config,
+                       permissive_cors_config)
+
 
 def create_app(
 		srv: Any,
@@ -60,6 +62,13 @@ def create_app(
 			for r in route_defs
 		],
 		middleware = middleware,
+		# HTTPErrors are derived from HTTPException types.
+		# As such, they need to be handled in the built-in ErrorMiddleware via an
+		# excpetion handler, as ErrorMiddleware has higher precedence than custom
+		# middlewares (such as our JSONMiddleware).
+		exception_handlers={
+			HTTPError: http_error_handler
+		}
 	)
 
 	health_app = Starlette(
