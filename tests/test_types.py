@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from enum import Enum
@@ -27,6 +28,11 @@ class CollectionTypes:
 @dataclass
 class OptionalTypes:
 	maybe_str_field: Optional[str]
+	maybe_int_field: Optional[int]
+	maybe_float_field: Optional[float]
+	maybe_bool_field: Optional[bool]
+	maybe_datetime_field: Optional[datetime]
+	maybe_date_field: Optional[date]
 
 StringEnum = Literal["type1", "type2", "type3"]
 class ActualEnum(Enum):
@@ -70,8 +76,19 @@ class EchoAPI:
 	async def post_collections(self, body: CollectionTypes) -> CollectionTypes:
 		return body
 
-	async def get_optional(self, maybe_str_field: Optional[str]) -> OptionalTypes:
-		return OptionalTypes(maybe_str_field)
+	async def get_optional(
+		self,
+		maybe_str_field: Optional[str],
+		maybe_int_field: Optional[int],
+		maybe_float_field: Optional[float],
+		maybe_bool_field: Optional[bool],
+		maybe_datetime_field: Optional[datetime],
+		maybe_date_field: Optional[date]
+	) -> OptionalTypes:
+		return OptionalTypes(
+			maybe_str_field, maybe_int_field, maybe_float_field, maybe_bool_field,
+			maybe_datetime_field, maybe_date_field
+		)
 
 	async def post_optional(self, body: OptionalTypes) -> OptionalTypes:
 		return body
@@ -136,6 +153,15 @@ def test_post_invalid_json(client: TestClient, example_scalars: Dict[str, Any]) 
 	)
 	assert res.status_code == 400
 
+def test_post_invalid_null_scalars(client: TestClient, example_scalars: Dict[str, Any]) -> None:
+	for key in example_scalars:
+		example_scalars[key] = None
+	data = json.dumps(example_scalars)
+	res = client.post(
+		'/scalars', headers={'content_type': 'application/json'}, data=data
+	)
+	assert res.status_code == 400
+
 def test_post(client: TestClient, example_scalars: Dict[str, Any]) -> None:
 	res = client.post('/scalars', json = example_scalars)
 	assert res.status_code == 200
@@ -172,25 +198,30 @@ def test_post_invalid_list(client: TestClient, example_collections: Dict[str, An
 	assert res.status_code == 400
 
 def test_get_optional_present(client: TestClient) -> None:
-	example_optional = asdict(OptionalTypes('string'))
+	example_optional = asdict(OptionalTypes('string', 1, 0.1, True, datetime.now(), date.today()))
+	example_optional['maybe_datetime_field'] = example_optional['maybe_datetime_field'].isoformat()
+	example_optional['maybe_date_field'] = example_optional['maybe_date_field'].isoformat()
 	res = client.get('/optional', params = example_optional)
 	assert res.status_code == 200
 	assert res.json() == example_optional
 
 def test_get_optional_missing(client: TestClient) -> None:
-	example_optional = asdict(OptionalTypes(None))
+	example_optional = asdict(OptionalTypes(None, None, None, None, None, None))
 	res = client.get('/optional', params = example_optional)
 	assert res.status_code == 200
 	assert res.json() == example_optional
 
 def test_post_optional_present(client: TestClient) -> None:
-	example_optional = asdict(OptionalTypes('string'))
+	example_optional = asdict(OptionalTypes('string', 1, 0.1, True, datetime.now(), date.today()))
+	example_optional['maybe_datetime_field'] = example_optional['maybe_datetime_field'].isoformat()
+	example_optional['maybe_date_field'] = example_optional['maybe_date_field'].isoformat()
 	res = client.post('/optional', json = example_optional)
+	print(res.json())
 	assert res.status_code == 200
 	assert res.json() == example_optional
 
 def test_post_optional_missing(client: TestClient) -> None:
-	example_optional = asdict(OptionalTypes(None))
+	example_optional = asdict(OptionalTypes(None, None, None, None, None, None))
 	res = client.post('/optional', json = example_optional)
 	assert res.status_code == 200
 	assert res.json() == example_optional
@@ -281,6 +312,17 @@ def test_get_invalid_datetime(client: TestClient) -> None:
 def test_post_invalid_datetime(client: TestClient) -> None:
 	res = client.post('/stdlib_types', json = { 'datetime_field': 'not a date' })
 	assert res.status_code == 400
+
+def test_post_invalid_null_stdlib_types(client: TestClient) -> None:
+	example_original = asdict(StdLibTypes(datetime.now(), date.today()))
+	for key in example_original:
+		example_original[key] = example_original[key].isoformat()
+	for invalid in (1, 0.1, False, None):
+		for key in example_original:
+			example = deepcopy(example_original)
+			example[key] = invalid
+			res = client.post('/stdlib_types', json = example)
+			assert res.status_code == 400
 
 def test_post_dataclass_union(client: TestClient) -> None:
 	example_str = UnionOfDataClasses(UnionEntryStrField('test'))
