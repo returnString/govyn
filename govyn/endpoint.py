@@ -1,8 +1,9 @@
 import json
+import traceback
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
 from enum import Enum, EnumMeta
-from typing import Any, Awaitable, Callable, Dict
+from typing import Any, Awaitable, Callable, Dict, Optional, Union
 
 from dacite.config import Config
 from dacite.core import from_dict
@@ -59,6 +60,11 @@ async def query_string_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str
 				ret[var_name] = parse_value(arg_def, var_name, value)
 	return ret
 
+def _isoformat(t: str, conv_func: Callable[[str], Union[datetime, date]], d: Optional[Any]) -> Union[datetime, date]:
+	if not isinstance(d, str):
+		raise ValueError(f'{d} is an invalid value for {t} type field. Must be a valid {t} string')
+	return conv_func(d)
+
 async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, Any]:
 	try:
 		json_body = await req.json()
@@ -67,10 +73,11 @@ async def json_body_parser(req: Request, args: Dict[str, ArgDef]) -> Dict[str, A
 
 	name = list(args)[0]
 	arg_def = args[name]
+
 	try:
 		body: Any = from_dict(arg_def.element_type, json_body, Config(type_hooks = {
-			datetime: datetime.fromisoformat,
-			date: date.fromisoformat
+			datetime: lambda d: _isoformat('datetime', datetime.fromisoformat, d),
+			date: lambda d: _isoformat('date', date.fromisoformat, d),
 		}, cast=[Enum]))
 	except (DaciteError, ValueError) as e:
 		raise BadRequest(str(e))
