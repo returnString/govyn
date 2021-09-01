@@ -11,16 +11,10 @@ from starlette.responses import JSONResponse, Response
 
 
 @dataclass
-class HTTPError(HTTPException):
+class HTTPError(Exception):
 	desc: str
 	data: Optional[Any] = None
 	code: ClassVar[int]
-
-	def __post_init__(self) -> None:
-		super().__init__(self.code, self.desc)
-
-	def as_response(self) -> JSONResponse:
-		return error_response(self.code, self.desc, self.data)
 
 @dataclass
 class BadRequest(HTTPError):
@@ -62,14 +56,9 @@ class JSONErrorMiddleware(BaseHTTPMiddleware):
 		try:
 			response = await call_next(request)
 			return response
+		except HTTPError as ex:
+			return error_response(ex.code, ex.desc, ex.data)
 		except Exception as ex:
 			print("Internal Error")
 			traceback.print_exc()
 			return error_response(500, None, None)
-
-def http_error_handler(request: Request, exc: HTTPError) -> JSONResponse:
-	'''
-	Handler function for HTTPError type exceptions. To be passed into the
-	starlette app as an exception handler to jsonify HTTPErrors
-	'''
-	return exc.as_response()
