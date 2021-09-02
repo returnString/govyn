@@ -34,7 +34,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 			principal = await self.auth_backend.resolve_principal(req)
 
 		if principal is None:
-			return Unauthorised('authentication failed').as_response()
+			raise Unauthorised('authentication failed')
 
 		req.state.principal = principal
 		return await call_next(req)

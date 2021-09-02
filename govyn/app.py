@@ -8,7 +8,7 @@ from starlette.types import ASGIApp
 
 from .auth import AuthBackend, AuthMiddleware
 from .endpoint import make_endpoint
-from .errors import HTTPError, JSONErrorMiddleware, http_error_handler
+from .errors import JSONErrorMiddleware
 from .metrics import MetricsMiddleware, MetricsRegistry
 from .openapi import openapi_app
 from .route_def import make_route_def
@@ -62,13 +62,6 @@ def create_app(
 			for r in route_defs
 		],
 		middleware = middleware,
-		# HTTPErrors are derived from HTTPException types.
-		# As such, they need to be handled in the built-in ErrorMiddleware via an
-		# excpetion handler, as ErrorMiddleware has higher precedence than custom
-		# middlewares (such as our JSONMiddleware).
-		exception_handlers={
-			HTTPError: http_error_handler
-		}
 	)
 
 	health_app = Starlette(
