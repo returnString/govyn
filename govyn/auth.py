@@ -8,8 +8,10 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from .errors import Unauthorised, Forbidden
+from .errors import Unauthorised
 from .metrics import MetricsRegistry
+
+_REQUIRES_PRIVILEGE_ATTR = '_requires_privilege'
 
 @dataclass
 class Principal:
@@ -64,13 +66,6 @@ TFunc = TypeVar('TFunc', bound = Callable[..., Any])
 
 def privileged(privilege: str) -> Callable[[ TFunc ], TFunc]:
 	def _decorator(func: TFunc) -> TFunc:
-		@wraps(func)
-		async def _impl(*args: Any, **kwargs: Any) -> Any:
-			principal = cast(Principal, kwargs['principal'])
-			if privilege not in principal.privileges:
-				raise Forbidden('insufficient privileges')
-
-			return await func(*args, **kwargs)
-
-		return cast(TFunc, _impl)
+		setattr(func, _REQUIRES_PRIVILEGE_ATTR, privilege)
+		return func
 	return _decorator

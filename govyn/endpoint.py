@@ -1,9 +1,8 @@
 import json
-import traceback
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
 from enum import Enum, EnumMeta
-from typing import Any, Awaitable, Callable, Dict, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, Optional, Union, cast
 
 from dacite.config import Config
 from dacite.core import from_dict
@@ -11,7 +10,8 @@ from dacite.exceptions import DaciteError
 from starlette.requests import Request
 from starlette.responses import Response
 
-from .errors import BadRequest
+from .auth import Principal
+from .errors import BadRequest, Forbidden
 from .route_def import ArgDef, RouteDef
 
 
@@ -94,8 +94,20 @@ def make_endpoint(route: RouteDef) -> Callable[[ Request ], Awaitable[Response]]
 
 	async def endpoint(req: Request) -> Response:
 		args = await parser(req, route.args)
+
+		principal = None
+		try:
+			principal = cast(Principal, req.state.principal)
+		except AttributeError:
+			pass
+
 		if route.requires_principal:
-			args['principal'] = req.state.principal
+			args['principal'] = principal
+
+		if route.requires_privilege is not None:
+			if not principal or route.requires_privilege not in principal.privileges:
+				raise Forbidden('insufficient privileges')
+
 		res = await route.impl(**args)
 		if is_dataclass(res):
 			res = asdict(res)

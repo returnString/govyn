@@ -1,9 +1,8 @@
-from typing import Any, Union, Dict, Callable, Literal, Set, TypeVar
+from typing import Any, Union, Dict, Callable, Literal, Set, TypeVar, Optional
 from dataclasses import dataclass
 from datetime import datetime, date
 
-from .errors import BadRequest
-from .auth import Principal
+from .auth import _REQUIRES_PRIVILEGE_ATTR
 
 _ParserType = Callable[[ str ], Any]
 
@@ -75,6 +74,7 @@ class RouteDef:
 	args: Dict[str, ArgDef]
 	return_type: type
 	requires_principal: bool
+	requires_privilege: Optional[str]
 	readable_name: str
 	doc: str
 
@@ -98,6 +98,9 @@ def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 		in input_annotations.items()
 	}
 
+	requires_privilege = getattr(impl, _REQUIRES_PRIVILEGE_ATTR, None)
+	assert requires_privilege is None or isinstance(requires_privilege, str)
+
 	return RouteDef(
 		path = '/' + '_'.join(name_tokens[1:]),
 		http_method = http_method,
@@ -105,6 +108,7 @@ def make_route_def(impl: Callable[..., Any]) -> RouteDef:
 		args = args,
 		return_type = return_type,
 		requires_principal = requires_principal,
+		requires_privilege = requires_privilege,
 		readable_name = ' '.join([ s.title() for s in name_tokens[1:] ]),
 		doc = getattr(impl, '__doc__'),
 	)
