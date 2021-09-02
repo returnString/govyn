@@ -29,7 +29,7 @@ class AuthAPI:
 		return AuthedResponse(principal.id)
 
 	@privileged('super_secret_access')
-	async def get_supersecret(self, principal: Principal) -> AuthedResponse:
+	async def get_supersecret(self) -> AuthedResponse:
 		return AuthedResponse('hot take')
 
 client = make_client(AuthAPI, auth_backend = HardcodedAuthBackend())
