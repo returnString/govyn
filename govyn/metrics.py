@@ -87,4 +87,13 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 			res = await call_next(req)
 			labels.update(status = res.status_code)
 
+			principal_labels = None
+			try:
+				principal_labels = req.state.principal_labels
+			except AttributeError:
+				pass
+
+			if principal_labels:
+				labels.update(**principal_labels)
+
 		return res

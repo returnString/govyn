@@ -1,7 +1,6 @@
-from typing import Set, Optional, Dict, Protocol, Callable, TypeVar, Any, ClassVar, Tuple, cast
+from typing import Set, Optional, Dict, Callable, TypeVar, Any, ClassVar, Tuple
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from functools import wraps
 
 from starlette.types import ASGIApp
 from starlette.requests import Request
@@ -18,12 +17,19 @@ class Principal:
 	id: str
 	privileges: Set[str]
 
-class AuthBackend(Protocol):
+class AuthBackend(ABC):
+	@abstractmethod
 	async def resolve_principal(self, req: Request) -> Optional[Principal]:
 		...
 
+	@abstractmethod
 	def openapi_spec(self) -> Tuple[str, Dict[str, Any]]:
 		...
+
+	def principal_metric_labels(self, principal: Principal) -> Dict[str, str]:
+		return {
+			'principal': principal.id,
+		}
 
 class AuthMiddleware(BaseHTTPMiddleware):
 	def __init__(self, app: ASGIApp, auth_backend: AuthBackend, metrics_registry: MetricsRegistry) -> None:
@@ -39,9 +45,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
 			raise Unauthorised('authentication failed')
 
 		req.state.principal = principal
+		req.state.principal_labels = self.auth_backend.principal_metric_labels(principal)
+
 		return await call_next(req)
 
-class HeaderAuthBackend(ABC):
+class HeaderAuthBackend(AuthBackend):
 	header: ClassVar[str]
 
 	async def resolve_principal(self, req: Request) -> Optional[Principal]:
