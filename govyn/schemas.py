@@ -24,7 +24,6 @@ _pytype_string_formats = {
 
 def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 	origin_type = getattr(py_type, '__origin__', None)
-	generic_types = getattr(py_type, '__args__', None)
 
 	if not origin_type:
 		if is_dataclass(py_type):
@@ -38,6 +37,8 @@ def pytype_to_schema(py_type: type) -> Dict[str, Any]:
 				'enum': list(e.value for e in py_type) # type: ignore
 			}
 	else:
+		generic_types = getattr(py_type, '__args__')
+
 		if origin_type == list:
 			return {
 				'type': 'array',

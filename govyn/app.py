@@ -35,10 +35,11 @@ def create_app(
 		metrics_registry = MetricsRegistry()
 
 	metrics_registry._const_labels['app'] = name
+	prom_service = metrics_registry._prom_svc
 
 	async def metrics_async_init() -> None:
 		if metrics_port:
-			await metrics_registry._prom_svc.start(addr = '0.0.0.0', port = metrics_port)
+			await prom_service.start(addr = '0.0.0.0', port = metrics_port)
 
 	startup_funcs = [ metrics_async_init ]
 	shutdown_funcs = []
