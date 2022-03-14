@@ -21,7 +21,7 @@ setup(
 		'starlette >= 0.14, < 0.15',
 		'uvicorn >= 0.13',
 		'dacite >= 1.5.1',
-		'aioprometheus[aiohttp] >= 20.0, < 21.9.0',
+		'aioprometheus[aiohttp] >= 20.0, < 22.4.0',
 		# not explicit dependencies, but required to avoid build breaks
 		'aiohttp >= 3.7',
 	],
